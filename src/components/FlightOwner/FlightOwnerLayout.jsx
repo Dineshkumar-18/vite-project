@@ -4,6 +4,7 @@ import Topbar from './Topbar';
 import { Outlet, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import FlightOwnerProfile from './FlightOwnerProfile';
+import { useFlightOwner } from './FlightOwnerContext';
 
 const FlightOwnerLayout = ({ children }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Sidebar toggle state
@@ -11,6 +12,7 @@ const FlightOwnerLayout = ({ children }) => {
     const [flightOwnerId, setFlightOwnerId] = useState(null);
     const [isProfileCompleted, setIsProfileCompleted] = useState(false);
     const [isApproved, setIsApproved] = useState(false);
+    const {flightOwner,updateFlightOwner}=useFlightOwner()
     const navigate = useNavigate();
     
     const toggleSidebar = () => {
@@ -35,10 +37,11 @@ const FlightOwnerLayout = ({ children }) => {
           );
   
           const { isProfileCompleted, isApproved } = profileResponse.data;
-          
+          console.log(profileResponse.data)
           // Set the profile completion and approval status
           setIsProfileCompleted(isProfileCompleted);
           setIsApproved(isApproved);
+          updateFlightOwner(profileResponse.data)
   
           if (!isProfileCompleted || !isApproved) {
             setShowProfileForm(true);

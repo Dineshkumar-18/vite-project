@@ -18,7 +18,7 @@ const FlightOwnerProfile = ({ flightOwnerId, onClose,isProfileCompleted }) => {
 
     try {
       const response = await axios.put(
-        `https://localhost:7055/api/FlightOwners/profileCompletion/${flightOwnerId}`, // Assuming flightOwnerId is available
+        `https://localhost:7055/api/FlightOwners/profileCompletion/${flightOwnerId}`, 
         profileData,
         { withCredentials: true }
       );

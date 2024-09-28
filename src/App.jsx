@@ -17,6 +17,7 @@ import AddFlightForm from './components/FlightOwner/AddFlightForm'
 import Register from './components/FlightOwner/Register'
 import FlightOwnerProfile from './components/FlightOwner/FlightOwnerProfile'
 import { FlightOwnerProvider } from './components/FlightOwner/FlightOwnerContext'
+import EditProfile from './components/FlightOwner/EditProfile'
 
 
 const ConditionalLayout = ({ children }) => {
@@ -57,7 +58,7 @@ const App = () => {
           <FlightOwnerProvider>
             <Register />
           </FlightOwnerProvider>
-        }/>
+          }/>
         <Route path="/flight-owner/login" element={
           <FlightOwnerProvider>
             <Login />
@@ -71,6 +72,7 @@ const App = () => {
                 </FlightOwnerProvider>
               }
             >
+            <Route path='manage-profile' element={<EditProfile/>}/>
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="add-airline" element={<AddAirlineForm/>}/>
             <Route path='add-flight' element={<AddFlightForm/>}/>

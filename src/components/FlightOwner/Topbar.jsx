@@ -10,6 +10,8 @@ const Topbar = () => {
    const dropdownRef = useRef(null);
    const { flightOwner } = useFlightOwner()
 
+   
+
    const navigate = useNavigate();
 
    const handleProfile=(e)=>
@@ -53,11 +55,12 @@ const Topbar = () => {
       </button>
      <div className='flex items-center gap-3 cursor-pointer relative p-2' onClick={(e)=>handleProfile(e)} ref={dropdownRef}>
       <i className="fa-solid fa-user"></i>
-      <span className="text-gray-600 text-md font-semibold">John doe</span>
+      <span className="text-gray-600 text-md font-semibold">{flightOwner && flightOwner.userName}</span>
+
      
       {profileOpen && 
-      <div className='absolute right-0 bg-secondary top-10 w-52 rounded-md h-max z-50 shadow-lg p-4 flex flex-col gap-3' onClick={(e) => e.stopPropagation()}> 
-        <div className='flex items-center gap-3 hover:bg-blue-500 hover:text-white rounded-lg p-2 '>
+      <div className='absolute right-0 bg-secondary top-10 w-52 rounded-md h-max z-50 shadow-lg p-4 flex flex-col gap-3' > 
+        <div className='flex items-center gap-3 hover:bg-blue-500 hover:text-white rounded-lg p-2' onClick={()=>navigate('/flight-owner/manage-profile')}>
          <i class="fas fa-user-edit"></i>
          <span className="text-md font-semibold">Manage Profile</span>
         </div>

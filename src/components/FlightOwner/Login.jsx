@@ -54,7 +54,8 @@ const Login = () => {
           withCredentials: true,
         }
       );
-      updateFlightOwner(profileResponse.data);
+      console.log(profileResponse.data)
+      localStorage.setItem('userData', JSON.stringify(profileResponse.userName));
       const { isProfileCompleted, isApproved } = profileResponse.data;
 
       setIsProfileCompleted(isProfileCompleted);
