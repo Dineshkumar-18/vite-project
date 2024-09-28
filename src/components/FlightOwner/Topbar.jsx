@@ -1,9 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useNavigation } from 'react-router-dom';
+import LogoutConfirmation from './LogoutConfirmation';
+import axios from 'axios';
+import { useFlightOwner } from './FlightOwnerContext';
 
 const Topbar = () => {
    const[profileOpen,setProfileOpen]=useState(false)
+   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
    const dropdownRef = useRef(null);
+   const { flightOwner } = useFlightOwner()
+
    const navigate = useNavigate();
 
    const handleProfile=(e)=>
@@ -14,6 +20,17 @@ const Topbar = () => {
     if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
       setProfileOpen(false);
     }
+  };
+
+  const handleLogout = () => {
+
+    axios.post('https://localhost:7055/api/Account/logout', {}, { withCredentials: true })
+      .then(response => {
+        navigate('/flight-owner/login');
+      })
+      .catch(error => {
+        console.error('Error during logout:', error);
+      });
   };
 
   useEffect(() => {
@@ -36,21 +53,27 @@ const Topbar = () => {
       </button>
      <div className='flex items-center gap-3 cursor-pointer relative p-2' onClick={(e)=>handleProfile(e)} ref={dropdownRef}>
       <i className="fa-solid fa-user"></i>
-      <span className="text-gray-600 text-md font-semibold">John Doe</span>
+      <span className="text-gray-600 text-md font-semibold">John doe</span>
      
       {profileOpen && 
-      <div className='absolute right-0 bg-secondary top-10 w-52 rounded-md h-max z-40 shadow-lg p-4 flex flex-col gap-3' onClick={(e) => e.stopPropagation()}> 
+      <div className='absolute right-0 bg-secondary top-10 w-52 rounded-md h-max z-50 shadow-lg p-4 flex flex-col gap-3' onClick={(e) => e.stopPropagation()}> 
         <div className='flex items-center gap-3 hover:bg-blue-500 hover:text-white rounded-lg p-2 '>
          <i class="fas fa-user-edit"></i>
          <span className="text-md font-semibold">Manage Profile</span>
         </div>
-        <div className='flex items-center gap-4 p-2 hover:bg-blue-500 rounded-lg hover:text-white'>
+        <div className='flex items-center gap-4 p-2 hover:bg-blue-500 rounded-lg hover:text-white' onClick={() => setShowLogoutConfirmation(true)}>
            <i class="fa-solid fa-right-from-bracket"></i>
           <button className='font-semibold'>Logout</button>
         </div>
      </div>}
     </div>
-    </div>
+    {showLogoutConfirmation && (
+        <LogoutConfirmation
+          onConfirm={handleLogout} // Log out user on confirmation
+          onCancel={() => setShowLogoutConfirmation(false)} // Hide popup on cancel
+        />
+      )}
+  </div>
 
   );
 };

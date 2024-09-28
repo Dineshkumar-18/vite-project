@@ -311,8 +311,8 @@ const FlightSearchForm = ({setIsSearched}) => {
       </main>
 
       <div className="p-6 bg-gray-100">
-      <h1 className="text-2xl font-bold mb-4">Flight Seat Layout</h1>
-      <FlightSeatLayout classConfigs={classConfigs} />
+      {/* <h1 className="text-2xl font-bold mb-4">Flight Seat Layout</h1> */}
+      {/* <FlightSeatLayout classConfigs={classConfigs} /> */}
     </div>
 
       </div>

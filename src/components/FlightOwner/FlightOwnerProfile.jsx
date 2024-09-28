@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const FlightOwnerProfile = ({ flightOwnerId, onClose,isProfileCompleted }) => {
+
+  const navigate=useNavigate()
   const [profileData, setProfileData] = useState({
     companyName: "",
     companyRegistrationNumber: "",
     companyPhoneNumber: "",
-    companyEmail: "",
+    companyEmail: "", 
     operatingLicenseNumber: "",
   });
-  const [isProfileSubmitted,setIsProfileSubmitted]=useState(false)
 
   const handleProfileCompletionSubmit = async (e) => {
     e.preventDefault();
@@ -27,6 +29,17 @@ const FlightOwnerProfile = ({ flightOwnerId, onClose,isProfileCompleted }) => {
       console.error("Error updating profile", error);
     }
   };
+
+  const handleBack=()=>
+  {
+    axios.post('https://localhost:7055/api/Account/logout', {}, { withCredentials: true })
+    .then(response => {
+      navigate('/flight-owner/login');
+    })
+    .catch(error => {
+      console.error('Error during logout:', error);
+    });
+  }
 
   return (
 
@@ -100,6 +113,7 @@ const FlightOwnerProfile = ({ flightOwnerId, onClose,isProfileCompleted }) => {
         <p className="text-gray-600 text-base mb-4">
           Thank you for submitting your profile details. Our team will review your information and get back to you as soon as possible. Meanwhile, please ensure that all the details provided are accurate and up-to-date. If you have any questions, feel free to contact our support team.
         </p>
+        <button className="px-6 py-3 bg-red-500 text-secondary rounded-lg" onClick={handleBack}>Go back</button>
         <div className="mt-4">
           <a href="/support" className="text-blue-500 hover:text-blue-700 font-medium">
             Contact Support

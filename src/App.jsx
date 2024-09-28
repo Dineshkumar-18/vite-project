@@ -15,6 +15,8 @@ import AddAirlineForm from './components/FlightOwner/AddAirlineForm'
 import Dashboard from './components/FlightOwner/Dashboard'
 import AddFlightForm from './components/FlightOwner/AddFlightForm'
 import Register from './components/FlightOwner/Register'
+import FlightOwnerProfile from './components/FlightOwner/FlightOwnerProfile'
+import { FlightOwnerProvider } from './components/FlightOwner/FlightOwnerContext'
 
 
 const ConditionalLayout = ({ children }) => {
@@ -48,14 +50,32 @@ const App = () => {
           <Route path='/login' element={<Login />} />
           <Route path="/flights/results" element={<FlightResults />}/>
           <Route path='/flights/booking/:id' element={<Booking/>}/>
-         
-          <Route path='/flight-owner/register' element={<Register/>}/>
-          <Route path='/flight-owner/login' element={<Login/>}/>
-         <Route path="/flight-owner/*" element={<FlightOwnerLayout />}>
+
+
+
+          <Route path="/flight-owner/register" element={
+          <FlightOwnerProvider>
+            <Register />
+          </FlightOwnerProvider>
+        }/>
+        <Route path="/flight-owner/login" element={
+          <FlightOwnerProvider>
+            <Login />
+          </FlightOwnerProvider>
+        }/>
+         <Route 
+              path="/flight-owner/*" 
+              element={
+                <FlightOwnerProvider>
+                  <FlightOwnerLayout />
+                </FlightOwnerProvider>
+              }
+            >
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="add-airline" element={<AddAirlineForm/>}/>
             <Route path='add-flight' element={<AddFlightForm/>}/>
           </Route>
+
       </Routes>
       </ConditionalLayout>
       

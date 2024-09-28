@@ -42,9 +42,7 @@ const FlightOwnerLayout = ({ children }) => {
   
           if (!isProfileCompleted || !isApproved) {
             setShowProfileForm(true);
-          } else if (isProfileCompleted && isApproved) {
-            navigate("/flight-owner/dashboard");
-          }
+          } 
         } catch (error) {
           console.error("Error fetching flight owner profile", error);
         }
@@ -61,8 +59,7 @@ const FlightOwnerLayout = ({ children }) => {
           <Topbar />
           <main className="p-4">
              <Outlet/>
-            </main> 
-          {/* Conditionally render FlightOwnerProfileForm */}
+          </main> 
         {showProfileForm && (
           <FlightOwnerProfile
             flightOwnerId={flightOwnerId}

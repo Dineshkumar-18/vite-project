@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
   return (
@@ -13,10 +14,10 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
       </div>
       <ul className="p-4 space-y-5">
         <li>
-          <a href="#" className="flex items-center p-3 hover:bg-blue-500 rounded-lg">
+          <Link to="/flight-owner/dashboard" className="flex items-center p-3 hover:bg-blue-500 rounded-lg">
             <i className='bx bx-home-alt mr-3'></i> 
             {isSidebarOpen && <span className="ml-3">Dashboard</span>}
-          </a>
+          </Link>
         </li>
         <li>
           <a href="#" className="flex items-center p-3 hover:bg-blue-500 rounded-lg">
