@@ -10,6 +10,16 @@ const FlightDetails = () => {
     const [flight, setFlight] = useState({});
     const [loading,setLoading]=useState(false)
     const [layoutOpen,setLayoutOpen]=useState(false)
+    const [seatLayoutInfo,setSeatLayoutInfo]=useState([])
+    const [disabledSeats,setDisabledSeats]=useState(new Set())
+    const [classnames, setClassnames] = useState([]);
+    const [rowCount, setRowCount] = useState({
+        'economy-row-count': 0,
+        'business-row-count': 0,
+        'first-row-count': 0,
+        'premium-row-count': 0,
+    });
+
 
     useEffect(() => {
 
@@ -21,16 +31,24 @@ const FlightDetails = () => {
 
                 const departAirportResponse = await axiosInstance.get(`/Airports/${flightData.departureAirportId}`);
                 const arrivalAirportResponse = await axiosInstance.get(`/Airports/${flightData.arrivalAirportId}`);
-
-
-                
-
                 const flightWithAirports = {
                     ...flightData,
                     departureAirport: departAirportResponse.data,
                     arrivalAirport: arrivalAirportResponse.data,
                 };
                 setFlight(flightWithAirports);
+               
+                const seatLayoutResponse=await axiosInstance.get(`/SeatLayout/${id}`)
+                console.log(seatLayoutResponse.data)
+                setSeatLayoutInfo(seatLayoutResponse.data)
+
+                const unavailableSeatResponse=await axiosInstance.get(`UnavailableSeat/${id}`)
+                console.log(unavailableSeatResponse.data)
+                const data=unavailableSeatResponse.data;
+                const seatNumbers = data.map(seat => seat.seatNumber);
+                setDisabledSeats(new Set(seatNumbers));
+                
+
             } catch (error) {
                 console.error("Error fetching flight details", error);
             }
@@ -38,6 +56,41 @@ const FlightDetails = () => {
         };
       fetchFlightDetails();
     }, [id]);
+
+
+    useEffect(() => {
+        if (seatLayoutInfo.length > 0) {
+            const updatedRowCount = {
+                'economy-row-count': 0,
+                'business-row-count': 0,
+                'first-row-count': 0,
+                'premium-row-count': 0,
+            };
+            const classNamesSet = new Set();
+
+            seatLayoutInfo.forEach(seatLayout => {
+                const classType = seatLayout.classType.toLowerCase(); // Convert to lower case for consistency
+
+                // Add class type to the set for unique values
+                classNamesSet.add(classType);
+
+                // Increment the corresponding row count
+                if (classType === 'economy') {
+                    updatedRowCount['economy-row-count'] += seatLayout.rowCount;
+                } else if (classType === 'business') {
+                    updatedRowCount['business-row-count'] += seatLayout.rowCount;
+                } else if (classType === 'first') {
+                    updatedRowCount['first-row-count'] += seatLayout.rowCount;
+                } else if (classType === 'premium') {
+                    updatedRowCount['premium-row-count'] += seatLayout.rowCount;
+                }
+            });
+
+            // Update state with the final values
+            setRowCount(updatedRowCount);
+            setClassnames(Array.from(classNamesSet));
+        }
+    }, [seatLayoutInfo]);
    
     console.log(flight)
 
@@ -46,7 +99,7 @@ const FlightDetails = () => {
     }
 
     return (
-        
+        <div>
         <div className="container mx-auto my-8 bg-white shadow-lg rounded-lg overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 text-center space-y-3">
@@ -120,18 +173,21 @@ const FlightDetails = () => {
         
     
             {/* Flight Actions */}
-            <div className="mt-6 text-center">
-              <button className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-300" onClick={()=>setLayoutOpen(prev=>!prev)}>
+            <div className="mt-6 text-center space-x-4">
+              <button className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-md transition duration-300" onClick={()=>setLayoutOpen(prev=>!prev)}>
                 View Seat Layout
               </button>
+              <button className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-300" onClick={()=>setLayoutOpen(prev=>!prev)}>
+                Schedule Flight
+              </button>
             </div>
-          </div>
 
-          {layoutOpen && 
-          <SeatAllocation/>
-          
-          
-          }
+          </div>
+        </div>
+        {layoutOpen && 
+            <SeatAllocation layout={seatLayoutInfo[0].layoutPattern} TotalColumns={seatLayoutInfo[0].totalColumns} setSeatCount={() => {}} disabledSeats={disabledSeats} setDisabledSeats={setDisabledSeats} classnames={classnames} rowCount={rowCount} role="flightOwner" isBookingStarted={false}/>
+            
+        }
         </div>
       );    
 };

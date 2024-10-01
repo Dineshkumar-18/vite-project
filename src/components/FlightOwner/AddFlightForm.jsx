@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AircraftSelector from './AircraftSelector';
 import SeatAllocation from '../SeatAllocation'
@@ -22,6 +22,7 @@ const AddFlightForm = () => {
   const [fromLocation,setFromLocation]=useState(0)
   const [toLocation,setToLocation]=useState(0)
   const [showSuccess, setShowSuccess] = useState(false);
+  const [flightId,setFlightId]=useState(0);
 
   const [TotalColumns, setTotalColumns] = useState(0);
   const [AirCraftType,setAirCraftType]=useState("")
@@ -35,6 +36,13 @@ const AddFlightForm = () => {
     const totalColumns = layout.split('+').reduce((acc, col) => acc + col.length, 0);
     console.log(totalColumns)
     setTotalColumns(totalColumns); // Update the total columns
+  };
+
+  const seatTypePatterns = {
+    'AC+DEFG+HJ': 'WA+AMMA+AW',  // 2+4+2 layout
+    'ABC+DEF+GHI': 'WMA+AMA+AMW', // 3+3+3 layout
+    'AB+CD+EF': 'WA+MM+AW',       // 2+2+2 layout
+    'ABC+DEF': 'WMA+AMW'            // 3+3 layout
   };
 
   
@@ -150,14 +158,23 @@ const handleChangeSeatCount=(e)=>
 
 
   // Handle checkbox changes
-  const handleCheckboxChange = (e) => {
+  const handleCheckboxChange = useCallback((e) => {
     const { name, checked } = e.target;
-    console.log(name,checked)
+    console.log(name, checked);
     setSelectedClasses((prevClasses) => ({
       ...prevClasses,
-      [name]: checked,
+      [name]: checked, // Toggle the checked state
     }));
-  };
+  }, []);
+
+
+  //convert object to array
+  const selectedClassesArray = useMemo(() => {
+    return Object.entries(selectedClasses)
+      .filter(([_, value]) => value) // Filter for true values
+      .map(([key]) => key); // Get the keys (class names)
+  }, [selectedClasses]);
+
 
   const handleViewFlights = () => {
     navigate('view-flights'); // Replace with your route
@@ -185,75 +202,134 @@ const handleChangeSeatCount=(e)=>
 
 
 
-  const handleSubmit=async(e)=>
-  {
-     e.preventDefault();
-     try
-     {
-      console.log(flightData)
-      const flightResponse=await axiosInstance.post('/Flight/add',flightData)
-      console.log(flightResponse.data)
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+  
+    // Construct seatLayouts for each selected class
+    const seatLayouts = [];
+    if (selectedClasses.economy) {
+      seatLayouts.push({
+        flightId: flightId,  // This will be updated later
+        totalColumns: TotalColumns,
+        layoutPattern: selectedLayout,
+        seatTypePattern: seatTypePatterns[selectedLayout] || '',
+        classType: 'Economy',
+        rowCount: parseInt(rowCount['economy-row-count'])
+      });
+    }
+  
+    if (selectedClasses.business) {
+      seatLayouts.push({
+        flightId: flightId,
+        totalColumns: TotalColumns,
+        layoutPattern: selectedLayout,
+        seatTypePattern: seatTypePatterns[selectedLayout] || '',
+        classType: 'Business',
+        rowCount: parseInt(rowCount['business-row-count'])
+      });
+    }
+  
+    if (selectedClasses.first) {
+      seatLayouts.push({
+        flightId: flightId,
+        totalColumns: TotalColumns,
+        layoutPattern: selectedLayout,
+        seatTypePattern: seatTypePatterns[selectedLayout] || '',
+        classType: 'First',
+        rowCount: parseInt(rowCount['first-row-count'])
+      });
+    }
+  
+    if (selectedClasses.premium) {
+      seatLayouts.push({
+        flightId: flightId,
+        totalColumns: TotalColumns,
+        layoutPattern: selectedLayout,
+        seatTypePattern: seatTypePatterns[selectedLayout] || '',
+        classType: 'Premium',
+        rowCount: parseInt(rrowCount['premium-row-count'])
+      });
+    }
+  
+    try {
+      console.log(flightData);
+  
+      // Create Flight and get flightId
+      const flightResponse = await axiosInstance.post('/Flight/add', flightData);
+      const newFlightId = flightResponse.data.data;  // Store the new FlightId
+  
+      console.log('Flight created with ID:', newFlightId);
+      setFlightId(newFlightId);  // Update state
+  
+      // Create Unavailable Seats
+      const unavailableSeatResponse = await axiosInstance.post('/UnavailableSeat', {
+        flightId: newFlightId,  // Use the newly created flight ID
+        seats: Array.from(disabledSeats),
+      });
+      console.log(unavailableSeatResponse.data);
+  
+      // Create Seat Layouts
+      const seatLayoutResponse = seatLayouts.map(layout => ({
+        ...layout,
+        flightId: newFlightId,  // Update FlightId for each layout
+      }));
 
-        const UnavailableSeatResponse=await axiosInstance.post('/UnavailableSeat',
-        {
-          flightId:flightResponse.data.data,
-          seats: Array.from(disabledSeats)
-        })
+      console.log(seatLayoutResponse);
 
-        console.log(UnavailableSeatResponse.data)
+      const seatLayoutDatabaseResponse=await axiosInstance.post('/SeatLayout',seatLayoutResponse)
+     
 
-
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth' // This enables smooth scrolling
-      });
-      setTimeout(() => {
-        setShowSuccess(true);
-        // Hide the message after 3 seconds
-        setTimeout(() => {
-          setShowSuccess(false);
-        }, 3000);
-      }, 500);
-      setFlightData({
-        airlineId: 0,
-        flightNumber: '',
-        airCraftType: "",
-        flightType: 'Domestic',
-        departAirport: "",
-        arrivalAirport: "",
-        totalSeats: 0,
-        totalSeatColumn: ""
-      });
-      setDisabledSeats(new Set());
-      setSelectedClasses({
-        economy: false,
-        business: false,
-        first: false,
-        premium: false,
-      });
-      setRowCount({
-        'economy-row-count': 0,
-        'business-row-count': 0,
-        'first-row-count': 0,
-        'premium-row-count': 0
-      });
-      setSeatCount({
-        'economy-seats': 0,
-        'business-seats': 0,
-        'first-seats': 0,
-        'premium-seats': 0
-      });
-      setSelectedLayout('');
-      setTotalColumns(0);
-      setAirCraftType(''); // Reset aircraft type
-      setFromLocation(''); // Reset departure location
-      setToLocation(''); // Reset arrival location
-     }
-     catch(error)
-     {
-      console.log(error)
-     }
-  }
+      console.log(seatLayoutDatabaseResponse.data)
+      // Scroll to top and show success message
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+  
+      // Reset form fields
+      resetFormFields();
+    } catch (error) {
+      console.error('Error:', error);
+      setError('Failed to create flight or seat layouts. Please try again.');
+    }
+  };
+  
+  const resetFormFields = () => {
+    setFlightData({
+      airlineId: 0,
+      flightNumber: '',
+      airCraftType: "",
+      flightType: 'Domestic',
+      departAirport: "",
+      arrivalAirport: "",
+      totalSeats: 0,
+      totalSeatColumn: ""
+    });
+    setDisabledSeats(new Set());
+    setSelectedClasses({
+      first: false,
+      business: false,
+      premium: false,
+      economy: false,
+    });
+    setRowCount({
+      'economy-row-count': 0,
+      'business-row-count': 0,
+      'first-row-count': 0,
+      'premium-row-count': 0
+    });
+    setSeatCount({
+      'economy-seats': 0,
+      'business-seats': 0,
+      'first-seats': 0,
+      'premium-seats': 0
+    });
+    setSelectedLayout('');
+    setTotalColumns(0);
+    setAirCraftType(''); // Reset aircraft type
+    setFromLocation(''); // Reset departure location
+    setToLocation('');   // Reset arrival location
+  };
+  
 
   return (
     <>
@@ -647,7 +723,7 @@ const handleChangeSeatCount=(e)=>
               />
             </div>
             <div className='col-span-2 mt-3'>
-              <SeatAllocation layout={selectedLayout} TotalColumns={TotalColumns} rowCount={rowCount} setSeatCount={setSeatCount} disabledSeats={disabledSeats} setDisabledSeats={setDisabledSeats}/>
+              <SeatAllocation layout={selectedLayout} TotalColumns={TotalColumns} rowCount={rowCount} setSeatCount={setSeatCount} disabledSeats={disabledSeats} setDisabledSeats={setDisabledSeats} role="flightOwner" classnames={selectedClassesArray}/>
            </div>
             {/* Buttons */}
             <div className="flex justify-center gap-4 mt-6 col-span-2">
