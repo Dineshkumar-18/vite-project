@@ -40,13 +40,14 @@ const convertSeatTypetoArray=(seatTypeString)=>
 
 const SeatAllocation = ({layout,TotalColumns,classnames,rowCount,setSeatCount,disabledSeats,setDisabledSeats,role,isBookingStarted}) => {
 
-  console.log(rowCount)
+  console.log(rowCount,classnames)
   
   
   const [selectedSeat, setSelectedSeat] = useState(null);
   const [loading,setLoading]=useState(false)
   const [showPopup,setShowPopup]=useState(false)
   const [Class,SetClass]=useState('')
+  const [selectedSeats, setSelectedSeats] = useState(new Set());
 
   const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
   const seatContainerRef = useRef(null);
@@ -58,9 +59,8 @@ const seatClassColors = {
     firstClass: 'bg-red-200', // Example color for first class
     disabled: 'bg-gray-300', // Color for disabled seats
 };
-
-
-  const seatTypePatterns = {
+ 
+const seatTypePatterns = {
     'AC+DEFG+HJ': 'WA+AMMA+AW',  // 2+4+2 layout
     'ABC+DEF+GHI': 'WMA+AMA+AMW', // 3+3+3 layout
     'AB+CD+EF': 'WA+MM+AW',       // 2+2+2 layout
@@ -77,6 +77,7 @@ const seatClassColors = {
   };
 
   const handleSeatClick = (seat, className, event) => {
+   if(role==='flightOwner'){
     if (disabledSeats.has(seat)) {
       // If the seat is already disabled, enable it by removing from disabledSeats
       setDisabledSeats(prev => {
@@ -99,6 +100,18 @@ const seatClassColors = {
       });
   
       setShowPopup(true); // Open the popup
+    }
+    }
+    else if(role==='user'){ 
+      setSelectedSeats((prevSelectedSeats) => {
+        const newSelectedSeats = new Set(prevSelectedSeats);
+        if (newSelectedSeats.has(seat)) {
+          newSelectedSeats.delete(seat); // Deselect the seat if already selected
+        } else {
+          newSelectedSeats.add(seat); // Select the seat
+        }
+        return newSelectedSeats;
+      });
     }
   };
 
@@ -252,7 +265,7 @@ const handleClick=async()=>
                         </div>
 
     <div className="relative flex" ref={seatContainerRef}>
-      {['economy', 'business', 'premium', 'first'].map((className) => (
+      {classnames.map((className) => (
         <div key={className}>
           {/* Container for each class */}
           <div className="flex">
@@ -264,29 +277,46 @@ const handleClick=async()=>
                   return (
                     <div
                       key={`${className}-${rowIndex}-${columnIndex}`} // Unique key using className, rowIndex, and columnIndex
-                      className={`text-neutral-400 flex justify-center items-center m-[2px] mx-[6px] h-[24px] w-[24px] ${
-                        disabledSeats.has(seatIdentifier) ? 'opacity-50' : ''
+                      className={`text-neutral-400 flex justify-center items-center m-[2px] mx-[6px] h-[24px] w-[24px]  ${ role==='flightOwner' ? 
+                        (disabledSeats.has(seatIdentifier) ? 'opacity-50 cursor-pointer' : 'cursor-pointer') :  (disabledSeats.has(seatIdentifier)  ? 'opacity-0 cursor-auto' : 'cursor-pointer' )}
                       }`}
                     >
                       <div className="w-full h-full">
-                        {seat !== " " ? (
-                          <Tippy content={ <div>
-                            <div>{className.toUpperCase()}</div>
-                            <div className='text-center'>{seatType[columnIndex]}</div>
-                          </div>} placement="top">
-                            <div
-                              className={`rounded-md w-full h-full flex items-center justify-center font-medium cursor-pointer ${
-                                disabledSeats.has(seatIdentifier) ? 'bg-gray-400 text-gray-800' : 'bg-[#471D36] text-white'
-                              }`}
-                              onClick={(event) => handleSeatClick(seatIdentifier,className,event)}
-                            >
-                              {/* No seat number display inside the box */}
-                            </div>
-                          </Tippy>
-                        ) : (
-                          <div className="h-full w-full cursor-auto"></div>
-                        )}
-                      </div>
+  {seat !== " " ? (
+    <Tippy
+      content={
+        <div>
+          <div>{className.toUpperCase()}</div>
+          <div className='text-center'>{seatType[columnIndex]}</div>
+        </div>
+      }
+      placement="top"
+    >
+      <div
+        className={`rounded-md w-full h-full flex items-center justify-center font-medium ${
+          disabledSeats.has(seatIdentifier) 
+            ? role === 'flightOwner' 
+              ? 'bg-gray-400 text-gray-800' // Flight owner can see disabled seats
+              : 'hidden' // User cannot see disabled seats
+              : selectedSeats.has(seatIdentifier) 
+              ? 'bg-green-500 text-white' // Selected seat style
+              : 'bg-[#471D36] text-white' // Available seat for all roles // Available seat for all roles
+        }`}
+        onClick={(event) => {
+            handleSeatClick(seatIdentifier, className, event);
+        }}
+      >
+        {selectedSeats.has(seatIdentifier) && (
+          <i class="fa-solid fa-check"></i> // You can use an icon library for a better tick mark
+        )}
+
+        {/* No seat number display inside the box */}
+      </div>
+    </Tippy>
+  ) : (
+    <div className="h-full w-full cursor-auto"></div>
+  )}
+</div>
                     </div>
                   );
                 })}
