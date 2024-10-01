@@ -412,7 +412,6 @@ const handleClick=async()=>
         </div>
         
     </div>
-    <button className='px-6 py-2 rounded-lg bg-red-500 text-white'>Save Layout</button>
     </div>
   )
 }

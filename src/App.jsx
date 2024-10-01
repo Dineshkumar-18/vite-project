@@ -23,6 +23,7 @@ import {useSession } from './context/SessionContext'
 import { configureInterceptors } from './utils/axiosInstance'
 import AirlineDetails from './components/FlightOwner/Airline/AirlineDetails'
 import FlightDetails from './components/FlightOwner/Flights/FlightDetails'
+import ScheduleFlights from './components/FlightOwner/Flights/ScheduleFlights'
 
 
 
@@ -135,7 +136,9 @@ const App = () => {
             <Route path='add-flight' element={<AddFlightForm/>}/>
             <Route path='view-airlines' element={<Airlines/>}/>
             <Route path="view-airline/:id" element={<AirlineDetails/>}/>
+
             <Route path='flight/:id' element={<FlightDetails/>}/>
+            <Route path='flight/schedule/:id' element={<ScheduleFlights/>}/>
           </Route>
 
       </Routes>

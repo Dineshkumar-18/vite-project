@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { FaPlaneDeparture, FaPlaneArrival, FaClock, FaCalendarAlt, FaUserTie, FaDollarSign } from 'react-icons/fa'; // Import icons
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import axiosInstance from '../../../utils/axiosInstance';
 import SeatAllocation from '../../SeatAllocation';
 
-const FlightDetails = () => {
+const FlightInfo = () => {
      
     const {id}=useParams()
     const [flight, setFlight] = useState({});
@@ -19,7 +19,6 @@ const FlightDetails = () => {
         'first-row-count': 0,
         'premium-row-count': 0,
     });
-    const navigate=useNavigate()
 
 
     useEffect(() => {
@@ -29,7 +28,7 @@ const FlightDetails = () => {
             try {
                 const response = await axiosInstance.get(`/Flight/flight/${id}`);
                 const flightData = response.data;
-
+                
                 const departAirportResponse = await axiosInstance.get(`/Airports/${flightData.departureAirportId}`);
                 const arrivalAirportResponse = await axiosInstance.get(`/Airports/${flightData.arrivalAirportId}`);
                 const flightWithAirports = {
@@ -158,7 +157,7 @@ const FlightDetails = () => {
                   <span className="font-semibold">Seat Layout:</span> {flight.totalSeatColumn} columns
                 </p>
               </div>
-    
+
               {/* Flight Type */}
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-gray-800">
@@ -178,8 +177,11 @@ const FlightDetails = () => {
               <button className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-md transition duration-300" onClick={()=>setLayoutOpen(prev=>!prev)}>
                 View Seat Layout
               </button>
-              <button className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-300" onClick={()=>{setLayoutOpen(prev=>!prev);navigate(`/flight-owner/flight/schedule/${id}`)}}>
-                Schedule Flight
+            </div>
+
+            <div className="mt-6 text-center space-x-4">
+              <button className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-300" onClick={()=>setLayoutOpen(prev=>!prev)}>
+                Edit Seat Layout
               </button>
             </div>
 
@@ -187,10 +189,9 @@ const FlightDetails = () => {
         </div>
         {layoutOpen && 
             <SeatAllocation layout={seatLayoutInfo[0].layoutPattern} TotalColumns={seatLayoutInfo[0].totalColumns} setSeatCount={() => {}} disabledSeats={disabledSeats} setDisabledSeats={setDisabledSeats} classnames={classnames} rowCount={rowCount} role="flightOwner" isBookingStarted={false}/>
-            
         }
         </div>
       );    
 };
 
-export default FlightDetails;
+export default FlightInfo;

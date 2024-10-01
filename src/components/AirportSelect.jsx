@@ -4,7 +4,7 @@ import axiosInstance from '../utils/axiosInstance';
 
 
 
-const AirportSelect = ({placeholder,setLocation,error,inputstyling,dropdownstyling}) => {
+const AirportSelect = ({placeholder,setLocation,error,inputstyling,dropdownstyling,initialLocationId}) => {
 
 
   console.log(inputstyling,dropdownstyling)
@@ -66,6 +66,20 @@ const fetchAirportOptions = async (query) => {
     setQuery(value); // Then update the input field with selected value
     setTimeout(() => setShowResults(false), 0);
   };
+
+
+  useEffect(() => {
+    if (initialLocationId) {
+      const fetchInitialAirport = async () => {
+        const response = await axiosInstance.get(`/Airports/${initialLocationId}`);
+        const airportData = response.data;
+        setQuery(`${airportData.airportName} - ${airportData.city}`);
+        setLocation(initialLocationId);
+        setDisplayedOptions([airportData]); // Update the displayed options
+      };
+      fetchInitialAirport();
+    }
+  }, [initialLocationId, setLocation]);
 
   return (
     <div className="relative">

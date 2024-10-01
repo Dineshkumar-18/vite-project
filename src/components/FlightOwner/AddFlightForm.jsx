@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import AircraftSelector from './AircraftSelector';
 import SeatAllocation from '../SeatAllocation'
 import axiosInstance from '../../utils/axiosInstance';
@@ -8,6 +8,8 @@ import { CheckCircleIcon } from '@heroicons/react/24/solid';
 
 const AddFlightForm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const {id}=useParams()
 
   const [selectedClasses, setSelectedClasses] = useState({
     economy: false,
@@ -26,6 +28,7 @@ const AddFlightForm = () => {
 
   const [TotalColumns, setTotalColumns] = useState(0);
   const [AirCraftType,setAirCraftType]=useState("")
+  const [loading,setLoading]=useState(false)
 
   const handleLayoutChange = (e) => {
     const layout = e.target.value;
@@ -247,7 +250,7 @@ const handleChangeSeatCount=(e)=>
         layoutPattern: selectedLayout,
         seatTypePattern: seatTypePatterns[selectedLayout] || '',
         classType: 'Premium',
-        rowCount: parseInt(rrowCount['premium-row-count'])
+        rowCount: parseInt(rowCount['premium-row-count'])
       });
     }
   
@@ -329,6 +332,58 @@ const handleChangeSeatCount=(e)=>
     setFromLocation(''); // Reset departure location
     setToLocation('');   // Reset arrival location
   };
+
+  useEffect(()=>
+    {
+       if(location.pathname.includes('edit')){
+        const fetchFlightDetails = async () => {
+            setLoading(true);
+            try {
+                const response = await axiosInstance.get(`/Flight/flight/${id}`);
+                const flightData = response.data;
+
+                const departAirportResponse = await axiosInstance.get(`/Airports/${flightData.departureAirportId}`);
+                const arrivalAirportResponse = await axiosInstance.get(`/Airports/${flightData.arrivalAirportId}`);
+                const flightWithAirports = {
+                    ...flightData,
+                    departureAirport: departAirportResponse.data,
+                    arrivalAirport: arrivalAirportResponse.data,
+                };
+                setFlightData(
+                  {
+                    airlineId:flightWithAirports.airlineId,
+                    flightNumber:flightWithAirports.flightNumber,
+                    flightType:flightWithAirports.flightType,
+                    airCraftType: flightWithAirports.airCraftType,
+                    departAirport: flightWithAirports.departureAirport.airportId,
+                    arrivalAirport: flightWithAirports.arrivalAirport.airportId,
+                    totalSeats: flightWithAirports.totalSeats,
+                    totalSeatColumn: flightWithAirports.totalSeatColumn
+                  }
+                )
+
+               
+                const seatLayoutResponse=await axiosInstance.get(`/SeatLayout/${id}`)
+                console.log(seatLayoutResponse.data)
+                setSeatLayoutInfo(seatLayoutResponse.data)
+
+                const unavailableSeatResponse=await axiosInstance.get(`UnavailableSeat/${id}`)
+                console.log(unavailableSeatResponse.data)
+                const data=unavailableSeatResponse.data;
+                const seatNumbers = data.map(seat => seat.seatNumber);
+                setDisabledSeats(new Set(seatNumbers));
+                
+
+            } catch (error) {
+                console.error("Error fetching flight details", error);
+            }
+            setLoading(false);  // Set loading to false after fetching
+        };
+      fetchFlightDetails();
+       }
+    },[])
+
+
   
 
   return (
