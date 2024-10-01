@@ -165,6 +165,8 @@ const FlightSearchForm = ({setIsSearched}) => {
               Location={fromLocation}
               setLocation={setFromLocation}
               error={error}
+              inputstyling={`p-2 rounded-md w-full outline-none ${error ? 'border-2 border-red-500' : 'border-2 border-customColor'}`}
+              dropdownstyling="bg-customColor" 
             />
           </div>
   
@@ -187,6 +189,8 @@ const FlightSearchForm = ({setIsSearched}) => {
               Location={toLocation}
               setLocation={setToLocation}
               error={error}
+              inputstyling={`p-2 rounded-md w-full outline-none ${error ? 'border-2 border-red-500' : 'border-2 border-customColor'}`}
+              dropdownstyling="bg-customColor" 
             />
           </div>
         </div>

@@ -1,12 +1,16 @@
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
+import axiosInstance from '../utils/axiosInstance';
 
 
 
-const AirportSelect = ({placeholder,Location,setLocation,error}) => {
+const AirportSelect = ({placeholder,setLocation,error,inputstyling,dropdownstyling}) => {
+
+
+  console.log(inputstyling,dropdownstyling)
   const [options, setOptions] = useState([]);
   const [displayedOptions, setDisplayedOptions] = useState([]);
-  const [query, setQuery] = useState(Location || '');
+  const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
 
@@ -18,16 +22,14 @@ const fetchAirportOptions = async (query) => {
   let response;
   if (query) {
     const encodedQuery = encodeURIComponent(query);
-    response = await axios.get(`https://localhost:7055/api/Airports/search?query=${encodedQuery}`);
+    response = await axiosInstance.get(`/Airports/search?query=${encodedQuery}`);
   } else {
-    response = await axios.get('https://localhost:7055/api/Airports');
+    response = await axiosInstance.get('/Airports');
   }
   return response.data;
 };
 
-useEffect(() => {
-  setQuery(Location); // Update query state to reflect the new Location value
-}, [Location]);
+
 
 
   useEffect(() => {
@@ -59,8 +61,8 @@ useEffect(() => {
     }
   };
 
-  const handleClick = (value) => {
-    setLocation(value)
+  const handleClick = (value,airportId) => {
+    setLocation(airportId)
     setQuery(value); // Then update the input field with selected value
     setTimeout(() => setShowResults(false), 0);
   };
@@ -70,9 +72,8 @@ useEffect(() => {
       <input
         type="text"
         value={query}
-        bg-secondary text-customColor border-customColor
         onChange={handleSearchChange}
-        className={`text-customColor p-2 border-2 bg-secondary font-semibold rounded-md ${error?'border-2 border-red-500': 'border-customColor' } w-full outline-none`}
+        className={inputstyling}
         placeholder={placeholder}
         onFocus={() => setShowResults(true)} // Show results when input is focused
       />
@@ -82,9 +83,17 @@ useEffect(() => {
             <div className="p-2 text-gray-600">Loading...</div>
           ) : (
             displayedOptions.map((option, index) => (
-              <div key={index} className="p-2 bg-customColor text-white cursor-pointer hover:bg-blue-500" onClick={() => handleClick(option.airportName)}>
-                {option.airportName}
-              </div>
+              <div
+  key={option.airportId}
+  className={`p-2 cursor-pointer hover:bg-blue-500 group ${dropdownstyling}`} // Add group class to parent div
+  onClick={() => handleClick(`${option.airportName} - ${option.city}`,option.airportId)}
+>
+  <span className="text-blue-600 font-semibold group-hover:bg-yellow-500 group-hover:text-white p-1 rounded">
+    {option.iataCode}
+  </span> {/* IATA code will change background and text color on hover */}
+  &nbsp;
+  {option.airportName} - {option.city}
+</div>
             ))
           )} 
           {displayedOptions.length === 0 && !loading && (<div className="p-2 text-gray-600">No results found</div>

@@ -18,7 +18,7 @@ const FlightDetailView = ({flightDetails,formatDate,formatDuration}) => {
           </div>
 
           {/* Detailed Table View */}
-          <div className="grid grid-cols-5 gap-4 mb-2 flex items-center">
+          <div className="grid grid-cols-5 gap-4 mb-2 items-center">
             <div className="flex flex-col">
                 <img
                 src="" // Image source for Indigo logo

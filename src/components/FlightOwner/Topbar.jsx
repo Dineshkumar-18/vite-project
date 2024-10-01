@@ -3,6 +3,7 @@ import { useNavigate, useNavigation } from 'react-router-dom';
 import LogoutConfirmation from './LogoutConfirmation';
 import axios from 'axios';
 import { useFlightOwner } from './FlightOwnerContext';
+import axiosInstance from '../../utils/axiosInstance';
 
 const Topbar = () => {
    const[profileOpen,setProfileOpen]=useState(false)
@@ -26,7 +27,7 @@ const Topbar = () => {
 
   const handleLogout = () => {
 
-    axios.post('https://localhost:7055/api/Account/logout', {}, { withCredentials: true })
+    axiosInstance.post('/Account/logout', {})
       .then(response => {
         navigate('/flight-owner/login');
       })
@@ -46,7 +47,7 @@ const Topbar = () => {
 
 
   return (
-    <div className="sticky top-0 flex justify-end items-center p-4 gap-4 bg-white shadow">
+    <div className="sticky top-0 flex justify-end items-center px-4   gap-4 bg-white shadow">
       <button className="bg-gray-100 hover:bg-gray-200 text-black font-semibold py-2 px-6 rounded-lg" onClick={()=>navigate('add-flight')}>
         <i className='bx bxs-plane-alt mr-2'></i> Add New Flight
       </button>
@@ -54,12 +55,19 @@ const Topbar = () => {
         <i className='bx bxs-plane-alt mr-2'></i> Add New Airline 
       </button>
      <div className='flex items-center gap-3 cursor-pointer relative p-2' onClick={(e)=>handleProfile(e)} ref={dropdownRef}>
-      <i className="fa-solid fa-user"></i>
+      {flightOwner && flightOwner.profilePictureUrl ? 
+      <img
+      src={flightOwner.profilePictureUrl}
+      alt="Profile Preview"
+      className="w-16 h-16 object-cover rounded-full border"
+    /> : <i className="fa-solid fa-user"></i>
+    }
+  
       <span className="text-gray-600 text-md font-semibold">{flightOwner && flightOwner.userName}</span>
 
      
       {profileOpen && 
-      <div className='absolute right-0 bg-secondary top-10 w-52 rounded-md h-max z-50 shadow-lg p-4 flex flex-col gap-3' > 
+      <div className='absolute right-0 bg-secondary top-16 w-52 rounded-md h-max z-50 shadow-lg p-4 flex flex-col gap-3' > 
         <div className='flex items-center gap-3 hover:bg-blue-500 hover:text-white rounded-lg p-2' onClick={()=>navigate('/flight-owner/manage-profile')}>
          <i class="fas fa-user-edit"></i>
          <span className="text-md font-semibold">Manage Profile</span>

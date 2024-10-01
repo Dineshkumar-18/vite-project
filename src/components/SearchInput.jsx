@@ -4,6 +4,7 @@ import FlightSearchForm from "./FlightSearchForm";
 import { AppContext } from "../context/AppContext";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import axiosInstance from "../utils/axiosInstance";
 
 const SearchInput = () => {
 
@@ -68,7 +69,7 @@ const SearchInput = () => {
 
       console.log(payload)
 
-      const response = await axios.post("https://localhost:7055/api/FlightSchedule/search-flights",payload)
+      const response = await axiosInstance.post("/FlightSchedule/search-flights",payload)
       console.log(response.data)
       // Navigate to the results page and pass data as state
       navigate('/flights/results', { state: { flightData: response.data} });
@@ -78,7 +79,11 @@ const SearchInput = () => {
 
   };
 
-  return (
+  console.log(`p-2 rounded-md w-full outline-none ${error ? 'border-2 border-red-500' : 'border-2 border-customColor'}`)
+
+
+  return (  
+
     
    <div className="flex flex-wrap md:flex-nowrap items-center justify-between bg-secondary p-4 rounded-t-lg shadow-md gap-3">
       {/* From Location, Swap Button, and To Location */}
@@ -90,6 +95,8 @@ const SearchInput = () => {
             Location={fromLocation}
             setLocation={setFromLocation}
             error={error}
+            inputstyling={`p-2 rounded-md w-full outline-none ${error ? 'border-2 border-red-500' : 'border-2 border-customColor'}`}
+            dropdownstyling="bg-customColor"          
           />
         </div>
 
@@ -110,6 +117,8 @@ const SearchInput = () => {
             Location={toLocation}
             setLocation={setToLocation}
             error={error}
+            inputstyling={`p-2 rounded-md w-full outline-none ${error ? 'border-2 border-red-500' : 'border-2 border-customColor'}`}
+            dropdownstyling="bg-customColor" 
           />
         </div>
       </div>

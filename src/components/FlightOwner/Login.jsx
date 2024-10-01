@@ -1,7 +1,9 @@
 import axios from 'axios';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useFlightOwner } from './FlightOwnerContext';
+import axiosInstance from '../../utils/axiosInstance';
+import { useSession } from '../../context/SessionContext';
 
 const Login = () => {
   const [flightOwnerId, setFlightOwnerId] = useState(null);
@@ -13,6 +15,7 @@ const Login = () => {
   const [view, setView] = useState(false);
   const { updateFlightOwner } = useFlightOwner();
   const navigate = useNavigate();
+  const{setUserType}=useSession()
 
   const handleChange = (e) => {
     setLogin({ ...login, [e.target.name]: e.target.value });
@@ -21,13 +24,12 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('https://localhost:7055/api/FlightOwnerAccount/login', login, {
-        withCredentials: true,
-      });
+      const response = await axiosInstance.post('/FlightOwnerAccount/login', login);
       if (!response.data.flag) {
         setError(response.data.message);
       } else {
         setError('');
+        setUserType('flightOwner');
         setIsLoggedIn(true); // Trigger the useEffect for fetching details
       }
     } catch (error) {
@@ -41,19 +43,13 @@ const Login = () => {
 
   const fetchFlightOwnerDetails = async () => {
     try {
-      const response = await axios.get('https://localhost:7055/api/FlightOwners/get-flightowner-details', {
-        withCredentials: true,
-      });
+      const response = await axiosInstance.get('/FlightOwners/get-flightowner-details');
 
       const { flightOwnerId } = response.data;
       setFlightOwnerId(flightOwnerId);
       
 
-      const profileResponse = await axios.get(`https://localhost:7055/api/FlightOwners/${flightOwnerId}`,
-        {
-          withCredentials: true,
-        }
-      );
+      const profileResponse = await axiosInstance.get(`/FlightOwners/${flightOwnerId}`);
       console.log(profileResponse.data)
       localStorage.setItem('userData', JSON.stringify(profileResponse.userName));
       const { isProfileCompleted, isApproved } = profileResponse.data;

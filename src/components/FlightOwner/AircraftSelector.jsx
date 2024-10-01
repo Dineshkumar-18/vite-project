@@ -10,7 +10,7 @@ const aircraftData = {
 };
 
 
-const AircraftSelector = () => {
+const AircraftSelector = ({setAirCraftType}) => {
   const [selectedManufacturer, setSelectedManufacturer] = useState("Airbus");
   const [selectedAircraft, setSelectedAircraft] = useState("");
 
@@ -21,6 +21,7 @@ const AircraftSelector = () => {
 
   const handleAircraftChange = (e) => {
     setSelectedAircraft(e.target.value);
+    setAirCraftType(`${selectedManufacturer}-${e.target.value}`); 
   };
 
   return (

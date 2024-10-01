@@ -5,6 +5,7 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import FlightOwnerProfile from './FlightOwnerProfile';
 import { useFlightOwner } from './FlightOwnerContext';
+import axiosInstance from '../../utils/axiosInstance';
 
 const FlightOwnerLayout = ({ children }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Sidebar toggle state
@@ -23,17 +24,14 @@ const FlightOwnerLayout = ({ children }) => {
       const fetchProfileStatus = async () => {
         try {
           // Get flight owner profile status (JWT stored in HTTP-only cookie)
-          const response = await axios.get("https://localhost:7055/api/FlightOwners/get-flightowner-details", {
-            withCredentials: true,
-          });
+          const response = await axiosInstance.get("/FlightOwners/get-flightowner-details");
   
           const { flightOwnerId } = response.data;
           setFlightOwnerId(flightOwnerId);
 
   
-          const profileResponse = await axios.get(
-            `https://localhost:7055/api/FlightOwners/${flightOwnerId}`,
-            { withCredentials: true }
+          const profileResponse = await axiosInstance.get(
+            `/FlightOwners/${flightOwnerId}`
           );
   
           const { isProfileCompleted, isApproved } = profileResponse.data;

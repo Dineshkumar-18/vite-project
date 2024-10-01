@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios'
+import axiosInstance from '../../utils/axiosInstance';
 
 
 const AddAirlineForm = () => {
@@ -38,11 +39,10 @@ const AddAirlineForm = () => {
 
       try {
         // Upload file and get the file URL from backend
-        const response = await axios.post('https://localhost:7055/api/Airlines/upload-logo', formDataFile, {
+        const response = await axiosInstance.post('/Airlines/upload-logo', formDataFile, {
           headers: {
             'Content-Type': 'multipart/form-data',
-          },
-          withCredentials: true,
+          }
         });
 
         console.log(response.data)
@@ -65,16 +65,12 @@ const AddAirlineForm = () => {
     try {
       console.log(formData)
       // Make the POST request to the backend with the formData
-      const response = await axios.post('https://localhost:7055/api/Airlines', formData,
-        {
-          withCredentials: true,
-        }
-      );
+      const response = await axiosInstance.post('/Airlines', formData);
       console.log('Airline added successfully:', response.data);
 
       // Navigate to view airlines page after successful submission
-      navigate('view-airlines');
-    } catch (error) {
+      navigate('/flight-owner/view-airlines');
+    } catch (error) {   
       console.error('Error adding airline:', error);
     }
   };
@@ -84,7 +80,7 @@ const AddAirlineForm = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold text-gray-800">Add New Airline</h2>
         <button
-          onClick={() => navigate('view-airlines')}
+          onClick={() => navigate('/flight-owner/view-airlines')}
           className="bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-4 rounded flex items-center gap-2"
         >
           <i className="fa-solid fa-plane-departure"></i>

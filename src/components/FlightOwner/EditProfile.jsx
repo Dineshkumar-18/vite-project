@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 import { useFlightOwner } from './FlightOwnerContext';
 import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 
 const EditProfile = () => {
 
@@ -62,6 +63,7 @@ useEffect(() => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [photoPreview, setPhotoPreview] = useState(null); // For profile photo preview
   const [uploading, setUploading] = useState(false);
+  const [initialAddressData, setInitialAddressData] = useState({});
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -100,22 +102,20 @@ useEffect(() => {
         formDataFile.append('file', file);
         let response="";
         try {
-            if(!flightOwner.profilePictureUrl){
+            if(!profileData.profilePictureUrl){
             // Upload file and get the file URL from backend
-            response = await axios.post(`https://localhost:7055/api/FlightOwners/upload-profile-picture/${flightOwner && flightOwner.userId}`, formDataFile, {
+            response = await axiosInstance.post(`/FlightOwners/upload-profile-picture/${flightOwner && flightOwner.userId}`, formDataFile, {
               headers: {
                 'Content-Type': 'multipart/form-data',
-              },
-              withCredentials: true,
+              }
             });
         }
         else
         {
-            response = await axios.put(`https://localhost:7055/api/FlightOwners/update-profile-picture/${flightOwner && flightOwner.userId}`, formDataFile, {
+            response = await axiosInstance.put(`/FlightOwners/update-profile-picture/${flightOwner && flightOwner.userId}`, formDataFile, {
                 headers: {
                   'Content-Type': 'multipart/form-data',
-                },
-                withCredentials: true,
+                }
               });
         }
             const logoUrl = response.data.fileUrl; // Assume the response contains fileUrl
@@ -130,9 +130,10 @@ useEffect(() => {
 
   const fetchAddress=async()=>
   {
-    const response=await  axios.get(`https://localhost:7055/api/Address/${profileData.addressId}`)
+    const response=await axiosInstance.get(`/Address/${profileData.addressId}`)
     console.log(response.data)
     setAddressData(response.data)
+    setInitialAddressData(response.data);
   }
 
 useEffect(()=>
@@ -143,6 +144,11 @@ useEffect(()=>
    }
 },[profileData.addressId])
 
+const isAddressChanged = () => {
+     console.log(JSON.stringify(addressData)+"  "+JSON.stringify(initialAddressData))
+     return JSON.stringify(addressData) !== JSON.stringify(initialAddressData);
+};
+
   // Handle form submission
   const handleSubmit = async(e) => {
      e.preventDefault();
@@ -152,10 +158,17 @@ useEffect(()=>
         console.log(profileData)
        if(profileData.addressId===null || profileData.addressId ===0)
        {
-        const addressResponse=await axios.post('https://localhost:7055/api/Address/create-address',addressData,{withCredentials:true})
+        const addressResponse=await axiosInstance.post('/Address/create-address',addressData)
         console.log(addressResponse.data)
         newAddressId = addressResponse.data.addressId; 
        }
+       else if (isAddressChanged()) {
+        const addressResponse = await axiosInstance.put(
+            `/Address/update-address/${profileData.addressId}`,
+            addressData);
+        console.log("Address updated: ", addressResponse.data);
+       }
+       
       const updateData=
       {
            
@@ -176,9 +189,12 @@ useEffect(()=>
       console.log('Profile Update Data:', updateData);
 
 
-       const profileResponse=await axios.put(`https://localhost:7055/api/FlightOwners/${flightOwner.userId}`,updateData,{withCredentials:true})
+       const profileResponse=await axiosInstance.put(`/FlightOwners/${flightOwner.userId}`,updateData)
        console.log(profileResponse.data)
-       updateFlightOwner(profileResponse.data)
+       window.scrollTo({
+        top: 0,
+        behavior: 'smooth' // This enables smooth scrolling
+    });
 
         setTimeout(() => {
         setShowSuccess(true);
@@ -187,7 +203,8 @@ useEffect(()=>
           setShowSuccess(false);
         }, 3000);
       }, 500);
-    console.log(profileData);
+     console.log(flightOwner)
+     console.log(profileData);
 
     }catch(error)
     {
@@ -197,8 +214,8 @@ useEffect(()=>
   };
 
   return (
-    <div className="w-3/4 mx-auto p-6 bg-white shadow-md rounded-lg">
-      <h2 className="text-2xl font-semibold mb-4">Edit Profile</h2>
+    <div className="w-3/4 mx-auto p-6 bg-white shadow-md rounded-lg" id='profile'>
+      <h2 className="text-3xl font-semibold mb-6">Edit Profile</h2>
       {showSuccess && (
         <div className="flex items-center justify-between p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg transition-opacity duration-500 ease-in-out">
           <div className="flex items-center">
@@ -235,7 +252,7 @@ useEffect(()=>
             </label>
             <input
               type="file"
-              accept="image/*"
+              accept=".jpg,.jpeg,.png"
               onChange={handlePhotoUpload}
               className="mt-1 block w-full text-md text-gray-900 border border-gray-300 p-2 rounded-lg cursor-pointer bg-gray-50"
             />
@@ -315,23 +332,27 @@ useEffect(()=>
         </div>
 
         {/* User Info */}
-        <div className='bg-blue-400 p-2 text-white rounded-lg'><h1 className='font-semibold text-lg '>Account Info</h1></div>
+    <div className='bg-blue-400 p-2 text-white rounded-lg '><h1 className='font-semibold text-lg '>Account Info</h1></div>
        <div className="grid grid-cols-2 gap-4">
         <div className='space-y-2'>
             <label className="block font-medium text-gray-700">Username</label>
             <input
               type="text"
               name="userName"
+              required
               value={profileData.userName || ''}
               onChange={handleChange}
               className="w-full border-gray-300 border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
+            {!profileData.userName &&  <p className="text-red-500 text-sm">Username is required</p>}
+
           </div>
           <div className='space-y-2'>
             <label className="block font-medium text-gray-700">Email</label>
             <input
               type="email"
               name="email"
+              required
               value={profileData.email || ''}
               onChange={handleChange}
               className="w-full border-gray-300 border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -342,6 +363,7 @@ useEffect(()=>
             <input
               type="text"
               name="firstName"
+              required
               value={profileData.firstName || ''}
               onChange={handleChange}
               className="w-full border-gray-300 border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -352,6 +374,7 @@ useEffect(()=>
             <input
               type="text"
               name="lastName"
+              required
               value={profileData.lastName || ''}
               onChange={handleChange}
               className="w-full border-gray-300 border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"

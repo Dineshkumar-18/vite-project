@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AircraftSelector from './AircraftSelector';
 import SeatAllocation from '../SeatAllocation'
+import axiosInstance from '../../utils/axiosInstance';
+import AirportSelect from '../AirportSelect';
+import { CheckCircleIcon } from '@heroicons/react/24/solid';
 
 const AddFlightForm = () => {
   const navigate = useNavigate();
+
   const [selectedClasses, setSelectedClasses] = useState({
     economy: false,
     business: false,
@@ -12,22 +16,28 @@ const AddFlightForm = () => {
     premium: false,
   });
   const [selectedLayout, setSelectedLayout] = useState('');
+  const [disabledSeats, setDisabledSeats] = useState(new Set());
+  const [error,setError]=useState("")
+  const [airlines,setAirlines]=useState([])
+  const [fromLocation,setFromLocation]=useState(0)
+  const [toLocation,setToLocation]=useState(0)
+  const [showSuccess, setShowSuccess] = useState(false);
 
+  const [TotalColumns, setTotalColumns] = useState(0);
+  const [AirCraftType,setAirCraftType]=useState("")
 
-  const handleTotalColumns=(e)=>
-  {
-    setTotalColumns(parseInt(e.target.value))
-  }
+  const handleLayoutChange = (e) => {
+    const layout = e.target.value;
+    console.log(layout)
+    setSelectedLayout(layout);
+  
+    // Split the layout string by "+" and sum the length of each segment
+    const totalColumns = layout.split('+').reduce((acc, col) => acc + col.length, 0);
+    console.log(totalColumns)
+    setTotalColumns(totalColumns); // Update the total columns
+  };
 
-  const [seatCount,setSeatCount]=useState(
-    {
-      'economy-seats':0,
-      'business-seats':0,
-      'first-seats':0,
-      'premium-seats':0
-    }
-  )
-
+  
   const [rowCount,setRowCount]=useState(
     {
       'economy-row-count':0,
@@ -36,6 +46,85 @@ const AddFlightForm = () => {
       'premium-row-count':0
     }
   )
+
+  const [seatCount,setSeatCount]=useState(
+    {
+      'economy-seats':TotalColumns*rowCount['economy-row-count'],
+      'business-seats':TotalColumns*rowCount['business-row-count'],
+      'first-seats':TotalColumns*rowCount['first-row-count'],
+      'premium-seats':TotalColumns*rowCount['premium-row-count']
+    }
+  )
+
+  useEffect(() => {
+    setSeatCount({
+      'economy-seats': TotalColumns * rowCount['economy-row-count'],
+      'business-seats': TotalColumns * rowCount['business-row-count'],
+      'first-seats': TotalColumns * rowCount['first-row-count'],
+      'premium-seats': TotalColumns * rowCount['premium-row-count'],
+    });
+  }, [TotalColumns, rowCount]);
+
+  const [flightData, setFlightData] = useState({
+    airlineId:0,
+    flightNumber: '',
+    airCraftType: AirCraftType,
+    flightType: 'Domestic',
+    departAirport: fromLocation,
+    arrivalAirport: toLocation,
+    totalSeats: 0,
+    totalSeatColumn: TotalColumns
+  });
+
+
+
+
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    console.log(name,value)
+    const updatedValue = name === "airlineId" ? parseInt(value) : value;
+    setFlightData((prevState) => ({
+      ...prevState,
+      [name]: updatedValue, // Update the field dynamically based on input name
+    }));
+  };
+
+  useEffect(() => {
+    const totalSeats = Object.values(seatCount).reduce((acc, cur) => acc + parseInt(cur), 0);
+    setFlightData((prevState) => ({
+      ...prevState,
+       totalSeats, 
+    }));
+  }, [seatCount]);
+
+
+  useEffect(() => {
+    setFlightData((prevState) => ({
+      ...prevState,
+      airCraftType: AirCraftType,
+      departAirport: fromLocation,
+      arrivalAirport: toLocation,
+    }));
+  }, [AirCraftType, fromLocation, toLocation]);
+
+  useEffect(() => {
+    setFlightData((prevState) => ({
+      ...prevState,
+       totalSeatColumn: TotalColumns, 
+    }));
+  }, [TotalColumns]);
+ 
+
+  const handleTotalColumns=(e)=>
+  {
+    setTotalColumns(parseInt(e.target.value))
+  }
+
+
+
+
+  
 
 
   const handleChangeRowCount=(e)=>
@@ -52,13 +141,12 @@ const handleChangeSeatCount=(e)=>
 
   setSeatCount((prevCount)=>(
     {
-      ...seatCount,
+      ...prevCount,
       [name]:value
     }
   ))
 }
 
-const totalSeatCount=Object.values(seatCount).reduce((acc, cur) => acc + parseInt(cur), 0);
 
 
   // Handle checkbox changes
@@ -83,10 +171,101 @@ const totalSeatCount=Object.values(seatCount).reduce((acc, cur) => acc + parseIn
     // Add more layouts as needed
   ];
 
-  const TotalColumns=selectedLayout.split('+').reduce((acc,row)=>acc+row.length,0)
+
+  useEffect(()=>
+  {
+     const fetchAirlines=async()=>
+     {
+      const response=await axiosInstance.get('/Airlines/airlinesByflightowner');
+      console.log(response.data)
+      setAirlines(response.data)
+     }
+     fetchAirlines();
+  },[])
+
+
+
+  const handleSubmit=async(e)=>
+  {
+     e.preventDefault();
+     try
+     {
+      console.log(flightData)
+      const flightResponse=await axiosInstance.post('/Flight/add',flightData)
+      console.log(flightResponse.data)
+
+        const UnavailableSeatResponse=await axiosInstance.post('/UnavailableSeat',
+        {
+          flightId:flightResponse.data.data,
+          seats: Array.from(disabledSeats)
+        })
+
+        console.log(UnavailableSeatResponse.data)
+
+
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth' // This enables smooth scrolling
+      });
+      setTimeout(() => {
+        setShowSuccess(true);
+        // Hide the message after 3 seconds
+        setTimeout(() => {
+          setShowSuccess(false);
+        }, 3000);
+      }, 500);
+      setFlightData({
+        airlineId: 0,
+        flightNumber: '',
+        airCraftType: "",
+        flightType: 'Domestic',
+        departAirport: "",
+        arrivalAirport: "",
+        totalSeats: 0,
+        totalSeatColumn: ""
+      });
+      setDisabledSeats(new Set());
+      setSelectedClasses({
+        economy: false,
+        business: false,
+        first: false,
+        premium: false,
+      });
+      setRowCount({
+        'economy-row-count': 0,
+        'business-row-count': 0,
+        'first-row-count': 0,
+        'premium-row-count': 0
+      });
+      setSeatCount({
+        'economy-seats': 0,
+        'business-seats': 0,
+        'first-seats': 0,
+        'premium-seats': 0
+      });
+      setSelectedLayout('');
+      setTotalColumns(0);
+      setAirCraftType(''); // Reset aircraft type
+      setFromLocation(''); // Reset departure location
+      setToLocation(''); // Reset arrival location
+     }
+     catch(error)
+     {
+      console.log(error)
+     }
+  }
 
   return (
-    <div className="flex">
+    <>
+    {showSuccess && (
+        <div className="flex items-center justify-between p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg transition-opacity duration-500 ease-in-out">
+          <div className="flex items-center">
+            <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
+            <p className='text-lg'>Flight Added Successfully</p>
+          </div>
+        </div>)}
+   
+    <div className="flex">  
       {/* Main Content */}
       <div className="p-3 w-full">
         <div className="flex justify-between items-center px-12">
@@ -112,19 +291,16 @@ const totalSeatCount=Object.values(seatCount).reduce((acc, cur) => acc + parseIn
               </label>
               <select
                 id="airline"
-                name="airline"
+                name="airlineId"
+                value={flightData.airlineId}
+                required
+                onChange={handleInputChange}
                 className="w-full border-gray-300 border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               >
-                <option value="">Select Airline</option>
-                <option value="AirIndia">Air India</option>
-                <option value="AirFrance">Air France</option>
-                <option value="Indigo">Indigo</option>
-                <option value="Lufthansa">Lufthansa</option>
-                <option value="MalaysiaAirlines">Malaysia Airlines</option>
-                <option value="SpiceJet">SpiceJet</option>
-                <option value="Vistara">Vistara</option>
-                <option value="QatarAirways">Qatar Airways</option>
-              </select>
+                {airlines.map((airline)=>(
+                  <option key={parseInt(airline.airlineId)} value={parseInt(airline.airlineId)}>{airline.airlineName}</option>
+                ))}
+                </select>
             </div>
 
             {/* Flight Number */}
@@ -137,15 +313,19 @@ const totalSeatCount=Object.values(seatCount).reduce((acc, cur) => acc + parseIn
               </label>
               <input
                 type="text"
+                value={flightData.flightNumber}
+                onChange={handleInputChange}
                 id="flight-number"
-                name="flight-number"
+                required
+                name="flightNumber"
                 className="w-full border-gray-300 border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
+            
 
             {/* Aircraft Selector */}
             <div className="bg-white p-4 rounded-lg shadow-sm">
-              <AircraftSelector />
+              <AircraftSelector setAirCraftType={setAirCraftType} />
             </div>
 
             {/* Flight Classes */}
@@ -160,6 +340,7 @@ const totalSeatCount=Object.values(seatCount).reduce((acc, cur) => acc + parseIn
                 <label className="flex items-center gap-3">
                   <input
                     type="checkbox"
+                    required
                     name="economy"
                     value="economy"
                     className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
@@ -172,6 +353,7 @@ const totalSeatCount=Object.values(seatCount).reduce((acc, cur) => acc + parseIn
                   <input
                     type="checkbox"
                     name="business"
+                    required
                     value="business"
                     className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     onChange={handleCheckboxChange}
@@ -183,6 +365,7 @@ const totalSeatCount=Object.values(seatCount).reduce((acc, cur) => acc + parseIn
                   <input
                     type="checkbox"
                     name="first"
+                    required
                     value="first"
                     className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     onChange={handleCheckboxChange}
@@ -194,6 +377,7 @@ const totalSeatCount=Object.values(seatCount).reduce((acc, cur) => acc + parseIn
                 <label className="flex items-center gap-3">
                   <input
                     type="checkbox"
+                    required
                     name="premium"
                     value="premium"
                     className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
@@ -203,6 +387,39 @@ const totalSeatCount=Object.values(seatCount).reduce((acc, cur) => acc + parseIn
                   <span className="text-gray-700">Premium Economy</span>
                 </label>
               </div>  
+            </div>
+            <div className="p-4 rounded-lg shadow-sm">
+              <label
+                htmlFor="flight-number"
+                className="block text-lg font-semibold text-gray-700 mb-2"
+              >
+                Flight Type:
+                </label>
+              <select className="w-full border-gray-300 border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none" name="flightType" value={flightData.flightType} onChange={handleInputChange} required>
+                <option value="Domestic">Domestic</option>
+                <option value="International">International</option>
+              </select>
+            </div>
+
+            <div className='p-4 rounded-lg shadow-sm'>
+              <label
+                htmlFor="flight-number"
+                className="block text-lg font-semibold text-gray-700 mb-2">  
+                Departure Location
+              </label>
+              <AirportSelect placeholder={"Departure"} Location={fromLocation} setLocation={setFromLocation} error={error} inputstyling={`p-2 rounded-lg outline-none w-full border-gray-300 border p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none ${error ? 'border-2 border-red-500' : 'border-2 hover:bg-blue-'}`}
+              dropdownstyling="bg-white hover:text-white"/>
+
+            </div>
+            <div className='p-4 rounded-lg shadow-sm'>
+              <label
+                htmlFor="flight-number"
+                className="block text-lg font-semibold text-gray-700 mb-2">  
+                Arrival Location
+              </label>
+              <AirportSelect placeholder={"Arrival"} Location={toLocation} setLocation={setToLocation} error={error} inputstyling={`p-2 rounded-lg outline-none w-full border-gray-300 border p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none ${error ? 'border-2 border-red-500' : 'border-2 hover:bg-blue-'}`}
+              dropdownstyling="bg-white hover:text-white"/>
+
             </div>
 
 
@@ -216,8 +433,9 @@ const totalSeatCount=Object.values(seatCount).reduce((acc, cur) => acc + parseIn
               <select
                 id="seat-layout"
                 name="seat-layout"
+                required
                 value={selectedLayout}
-                onChange={(e) => setSelectedLayout(e.target.value)}
+                onChange={handleLayoutChange}
                 className="w-full border-gray-300 border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               >
                 <option value="">Select Layout</option>
@@ -240,6 +458,7 @@ const totalSeatCount=Object.values(seatCount).reduce((acc, cur) => acc + parseIn
               <input
                 type="number"
                 id="economy-row-count"
+                required
                 name="economy-row-count"
                 value={rowCount['economy-row-count']}
                 onChange={handleChangeRowCount}
@@ -258,6 +477,7 @@ const totalSeatCount=Object.values(seatCount).reduce((acc, cur) => acc + parseIn
               <input
                 type="number"
                 id="business-row-count"
+                required
                 name="business-row-count"
                 value={rowCount['business-row-count']}
                 onChange={handleChangeRowCount}
@@ -276,6 +496,7 @@ const totalSeatCount=Object.values(seatCount).reduce((acc, cur) => acc + parseIn
               <input
                 type="number"
                 id="first-row-count"
+                required
                 name="first-row-count"
                 value={rowCount['first-row-count']}
                 onChange={handleChangeRowCount}
@@ -295,6 +516,7 @@ const totalSeatCount=Object.values(seatCount).reduce((acc, cur) => acc + parseIn
               <input
                 type="number"
                 id="premium-row-count"
+                required
                 name="premium-row-count"
                 value={rowCount['premium-row-count']}
                 onChange={handleChangeRowCount}
@@ -315,8 +537,9 @@ const totalSeatCount=Object.values(seatCount).reduce((acc, cur) => acc + parseIn
               <input
                 type="number"
                 id="economy-seats"
+                required
                 name="economy-seats"
-                value={TotalColumns*rowCount['economy-row-count']}
+                value={seatCount['economy-seats']}
                 onChange={handleChangeSeatCount}
                 disabled
                 className="w-full border-gray-300 border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -336,8 +559,9 @@ const totalSeatCount=Object.values(seatCount).reduce((acc, cur) => acc + parseIn
                 type="number"
                 id="business-seats"
                 name="business-seats"
+                required
                 disabled
-                value={TotalColumns*rowCount['business-row-count']}
+                value={seatCount['business-seats']}
                 onChange={handleChangeSeatCount}
                 className="w-full border-gray-300 border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
@@ -356,8 +580,9 @@ const totalSeatCount=Object.values(seatCount).reduce((acc, cur) => acc + parseIn
                 type="number"
                 id="first-class-seats"
                 name="first-seats"
+                required
                 disabled
-                value={TotalColumns*rowCount['first-row-count']}
+                value={seatCount['first-seats']}
                 onChange={handleChangeSeatCount}
                 className="w-full border-gray-300 border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
@@ -375,6 +600,7 @@ const totalSeatCount=Object.values(seatCount).reduce((acc, cur) => acc + parseIn
               <input
                 type="number"
                 id="premium-seats"
+                required
                 name="premium-seats"
                 value={seatCount['premium-seats']}
                 onChange={handleChangeSeatCount}
@@ -394,8 +620,9 @@ const totalSeatCount=Object.values(seatCount).reduce((acc, cur) => acc + parseIn
               <input
                 type="number"
                 id="total-seats"
+                required
                 name="total-seats"
-                value={TotalColumns}
+                value={flightData.totalSeatColumn}
                 disabled
                 className="w-full border-gray-300 border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
@@ -412,22 +639,22 @@ const totalSeatCount=Object.values(seatCount).reduce((acc, cur) => acc + parseIn
               <input
                 type="number"
                 id="total-seats"
+                required
                 name="total-seats"
-                value={totalSeatCount}
-                disabled={true}
+                value={flightData.totalSeats}
+                disabled
                 className="w-full border-gray-300 border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
-
-            <div className='col-span-2'>
-              <SeatAllocation layout={selectedLayout} TotalColumns={TotalColumns} RowCount={rowCount}/>
-            </div>
-
+            <div className='col-span-2 mt-3'>
+              <SeatAllocation layout={selectedLayout} TotalColumns={TotalColumns} rowCount={rowCount} setSeatCount={setSeatCount} disabledSeats={disabledSeats} setDisabledSeats={setDisabledSeats}/>
+           </div>
             {/* Buttons */}
             <div className="flex justify-center gap-4 mt-6 col-span-2">
               <button
                 type="submit"
                 className="bg-blue-600 text-white py-3 px-8 rounded hover:bg-blue-700"
+                onClick={handleSubmit}
               >
                 Submit
               </button>
@@ -438,10 +665,11 @@ const totalSeatCount=Object.values(seatCount).reduce((acc, cur) => acc + parseIn
                 Reset
               </button>
             </div>
-          </form>
+          </form>    
         </div>
       </div>
     </div>
+    </>
   );
 };
 

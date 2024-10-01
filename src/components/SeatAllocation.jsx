@@ -1,6 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react'
 import Tippy from '@tippyjs/react';
 import 'tippy.js/dist/tippy.css';
+import axiosInstance from '../utils/axiosInstance';
 
 
 const convertLayoutToArray = (layoutString) => {
@@ -18,45 +19,113 @@ console.log(layoutString)
   return result.reverse();
 };
 
+const convertSeatTypetoArray=(seatTypeString)=>
+{
+  let result=[];
+  for(let char of seatTypeString)
+  {
+    if (char === '+') {
+      result.push(' ');
+    } else {
+        let value='';
+        if(char==='W') value='Window';
+        else if(char==='A') value='Aisle';
+        else value='Middle'
+        result.push(value);
+    }
+  }
+  return result;
+}
 
-const SeatAllocation = ({layout,TotalColumns,RowCount}) => {
 
-   
+const SeatAllocation = ({layout,TotalColumns,classnames,rowCount,setSeatCount,disabledSeats,setDisabledSeats,role,isBookingStarted}) => {
+
+  console.log(rowCount)
+  
+  
   const [selectedSeat, setSelectedSeat] = useState(null);
-  const [disabledSeats, setDisabledSeats] = useState(new Set());
+  const [loading,setLoading]=useState(false)
+  const [showPopup,setShowPopup]=useState(false)
+  const [Class,SetClass]=useState('')
 
   const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
   const seatContainerRef = useRef(null);
 
-  const handleSeatClick = (seat,event) => {
+
+const seatClassColors = {
+    economy: 'bg-green-200', // Example color for economy class
+    business: 'bg-blue-200', // Example color for business class
+    firstClass: 'bg-red-200', // Example color for first class
+    disabled: 'bg-gray-300', // Color for disabled seats
+};
+
+
+  const seatTypePatterns = {
+    'AC+DEFG+HJ': 'WA+AMMA+AW',  // 2+4+2 layout
+    'ABC+DEF+GHI': 'WMA+AMA+AMW', // 3+3+3 layout
+    'AB+CD+EF': 'WA+MM+AW',       // 2+2+2 layout
+    'ABC+DEF': 'WMA+AMW'            // 3+3 layout
+  };
+
+  const updateSeatCount = (className, value) => {
+    setSeatCount((prevCounts) => {
+      return {
+        ...prevCounts,
+        [`${className}-seats`]: prevCounts[`${className}-seats`] + value,
+      };
+    });
+  };
+
+  const handleSeatClick = (seat, className, event) => {
     if (disabledSeats.has(seat)) {
-      // Toggle the seat between disabled and enabled
-      setDisabledSeats(new Set(disabledSeats.delete(seat) ? disabledSeats : disabledSeats.add(seat)));
+      // If the seat is already disabled, enable it by removing from disabledSeats
+      setDisabledSeats(prev => {
+        const updatedSeats = new Set(prev);
+        updatedSeats.delete(seat); // Remove from disabledSeats
+        return updatedSeats;
+      });
+      updateSeatCount(className, 1); // Increment seat count
     } else {
+      // If seat is not disabled, open the popup for actions (Delete or Close)
       setSelectedSeat(seat);
+      SetClass(className)
+  
       const containerRect = seatContainerRef.current.getBoundingClientRect();
       const seatRect = event.currentTarget.getBoundingClientRect();
-      
+  
       setPopupPosition({
         top: seatRect.top - containerRect.top,
         left: seatRect.left - containerRect.left,
       });
-    }
-
-
-  };
-
-  const handleDeleteSeat = () => {
-    if (selectedSeat) {
-      setDisabledSeats(new Set(disabledSeats.add(selectedSeat)));
-      setSelectedSeat(null);
+  
+      setShowPopup(true); // Open the popup
     }
   };
 
-
+    const handleDeleteSeat = () => {
+       console.log(Class)
+      if (selectedSeat) {
+        // Add the selected seat to disabledSeats
+        setDisabledSeats(prev => {
+          const updatedSeats = new Set(prev);
+          updatedSeats.add(selectedSeat); // Disable the seat
+          return updatedSeats;
+        });
+        updateSeatCount(Class, -1); // Decrement seat count
+        setSelectedSeat(null); // Clear the selected seat
+        setShowPopup(false); // Close the popup
+      }
+    };
+   
+  console.log(layout)
   const seats = convertLayoutToArray(layout);
   console.log(seats)
-
+  console.log(layout)
+  
+  let seatType=''
+  if(layout) { seatType=convertSeatTypetoArray(seatTypePatterns[layout])}
+  console.log(seats)
+  console.log(seatType)
   const seatHeight = useMemo(() => {
     console.log('Calculating seatHeight');
     return 28 * (TotalColumns + 1) + 80;
@@ -64,9 +133,30 @@ const SeatAllocation = ({layout,TotalColumns,RowCount}) => {
   const containerHeight=seatHeight+104
 
   console.log(seatHeight,containerHeight)
+
+const handleClick=async()=>
+{
+  
+  //  const disabledSeatsArray = Array.from(disabledSeats);
+   
+  //  const requestBody = {
+  //   flightId: flightId,
+  //   seats: disabledSeatsArray
+  // };
+  // try{
+  //  const response=await axiosInstance.post('/UnavailableSeat',requestBody);
+  //  console.log(response.data)
+  // }
+  // catch(error)
+  // {
+  //   console.log(error)
+  // }
+}
+
   let rowNumber=1;
 
   return (
+    <div className='space-y-3'>
     <div className='bg-flightbg rounded-br-sm border border-1 border-neutral-100 flex items-center relative rounded-lg'>
         <div>
         <svg
@@ -166,11 +256,11 @@ const SeatAllocation = ({layout,TotalColumns,RowCount}) => {
         <div key={className}>
           {/* Container for each class */}
           <div className="flex">
-            {Array.from({ length: RowCount[`${className}-row-count`] }).map((_, rowIndex) => (
+            {Array.from({ length: rowCount[`${className}-row-count`] }).map((_, rowIndex) => (
                <div className="relative flex flex-col flex-nowrap left-0" key={`${className}-${rowIndex}`}>
                 {/* Container for each row */}
                 {seats.map((seat, columnIndex) => {
-                  const seatIdentifier = `${rowNumber}${seat}`; // Assuming seats array contains column identifiers (e.g., ['A', 'B', 'C'])
+                  const seatIdentifier = `${rowNumber}${seat}`;    // Assuming seats array contains column identifiers (e.g., ['A', 'B', 'C'])
                   return (
                     <div
                       key={`${className}-${rowIndex}-${columnIndex}`} // Unique key using className, rowIndex, and columnIndex
@@ -180,12 +270,15 @@ const SeatAllocation = ({layout,TotalColumns,RowCount}) => {
                     >
                       <div className="w-full h-full">
                         {seat !== " " ? (
-                          <Tippy content={`${className.toUpperCase()} Class`} placement="top">
+                          <Tippy content={ <div>
+                            <div>{className.toUpperCase()}</div>
+                            <div className='text-center'>{seatType[columnIndex]}</div>
+                          </div>} placement="top">
                             <div
                               className={`rounded-md w-full h-full flex items-center justify-center font-medium cursor-pointer ${
                                 disabledSeats.has(seatIdentifier) ? 'bg-gray-400 text-gray-800' : 'bg-[#471D36] text-white'
                               }`}
-                              onClick={(event) => handleSeatClick(seatIdentifier, event)}
+                              onClick={(event) => handleSeatClick(seatIdentifier,className,event)}
                             >
                               {/* No seat number display inside the box */}
                             </div>
@@ -209,7 +302,19 @@ const SeatAllocation = ({layout,TotalColumns,RowCount}) => {
 
       {/* Popup rendered once based on selectedSeat */}
       {selectedSeat && (
-        <div className="absolute top-0 left-0 p-4 bg-white border rounded shadow-md" style={{ top: popupPosition.top, left: popupPosition.left }}>
+        <div className="absolute top-0 left-0 p-4 bg-white border rounded shadow-md z-50" style={{ top: popupPosition.top, left: popupPosition.left }}>
+
+     
+      <button
+        className="text-red-500 absolute right-3 top-1 text-lg font-bold"
+        onClick={() => {
+          setShowPopup(false); // Close the popup without modifying
+          setSelectedSeat(null); // Reset the selected seat
+        }}
+      >
+        X
+      </button>
+
           <div>Seat Number: {selectedSeat}</div>
           <button
             onClick={handleDeleteSeat}
@@ -220,10 +325,6 @@ const SeatAllocation = ({layout,TotalColumns,RowCount}) => {
         </div>
       )}
     </div>
-
-                      
-                          
-
 
                          <div className="m-0 pl-2 h-px w-px"></div>
                          <div className='flex flex-col justify-between nmy-5 flex-nowrap'>
@@ -279,6 +380,9 @@ const SeatAllocation = ({layout,TotalColumns,RowCount}) => {
                 </div>
             </div>
         </div>
+        
+    </div>
+    <button className='px-6 py-2 rounded-lg bg-red-500 text-white'>Save Layout</button>
     </div>
   )
 }

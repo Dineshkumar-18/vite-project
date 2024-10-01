@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import axiosInstance from "../../utils/axiosInstance";
 
 const FlightOwnerProfile = ({ flightOwnerId, onClose,isProfileCompleted }) => {
 
@@ -17,10 +18,9 @@ const FlightOwnerProfile = ({ flightOwnerId, onClose,isProfileCompleted }) => {
     e.preventDefault();
 
     try {
-      const response = await axios.put(
-        `https://localhost:7055/api/FlightOwners/profileCompletion/${flightOwnerId}`, 
-        profileData,
-        { withCredentials: true }
+      const response = await axiosInstance.put(
+        `/FlightOwners/profileCompletion/${flightOwnerId}`, 
+        profileData
       );
 
       alert(response.data);
@@ -32,7 +32,7 @@ const FlightOwnerProfile = ({ flightOwnerId, onClose,isProfileCompleted }) => {
 
   const handleBack=()=>
   {
-    axios.post('https://localhost:7055/api/Account/logout', {}, { withCredentials: true })
+    axiosInstance.post('/Account/logout', {})
     .then(response => {
       navigate('/flight-owner/login');
     })
@@ -53,12 +53,14 @@ const FlightOwnerProfile = ({ flightOwnerId, onClose,isProfileCompleted }) => {
                               type="text"
                               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out"
                               value={profileData.companyName}
+                              required
                               onChange={(e) => setProfileData({ ...profileData, companyName: e.target.value })} />
                       </div>
                       <div className="mb-5">
                           <label className="block text-gray-700 text-sm font-medium mb-1">Company Registration Number</label>
                           <input
                               type="text"
+                              required
                               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out"
                               value={profileData.companyRegistrationNumber}
                               onChange={(e) => setProfileData({
@@ -70,6 +72,7 @@ const FlightOwnerProfile = ({ flightOwnerId, onClose,isProfileCompleted }) => {
                           <label className="block text-gray-700 text-sm font-medium mb-1">Company Email</label>
                           <input
                               type="email"
+                              required
                               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out"
                               value={profileData.companyEmail}
                               onChange={(e) => setProfileData({ ...profileData, companyEmail: e.target.value })} />
@@ -78,6 +81,7 @@ const FlightOwnerProfile = ({ flightOwnerId, onClose,isProfileCompleted }) => {
                           <label className="block text-gray-700 text-sm font-medium mb-1">Company Phone Number</label>
                           <input
                               type="text"
+                              required
                               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out"
                               value={profileData.companyPhoneNumber}
                               onChange={(e) => setProfileData({
@@ -89,6 +93,7 @@ const FlightOwnerProfile = ({ flightOwnerId, onClose,isProfileCompleted }) => {
                           <label className="block text-gray-700 text-sm font-medium mb-1">Operating License Number</label>
                           <input
                               type="text"
+                              required
                               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out"
                               value={profileData.operatingLicenseNumber}
                               onChange={(e) => setProfileData({
@@ -96,12 +101,17 @@ const FlightOwnerProfile = ({ flightOwnerId, onClose,isProfileCompleted }) => {
                                   operatingLicenseNumber: e.target.value,
                               })} />
                       </div>
+                      <div className="flex gap-3">
+                      <button className="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out" onClick={()=>navigate('/flight-owner/login')}>
+                        Go back
+                      </button>
                       <button
                           type="submit"
                           className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out"
                       >
                           Submit
                       </button>
+                      </div>
                   </form></>) : (
         <div className="text-center bg-white p-6 rounded-lg  w-full max-w-sm mx-auto">
         <div className="text-gray-800 text-2xl font-semibold mb-4">

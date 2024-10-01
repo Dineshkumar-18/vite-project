@@ -1,6 +1,7 @@
 import axios from 'axios';
 import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import axiosInstance from '../../utils/axiosInstance';
 
 const Register = () => {
     const [register, setRegister] = useState({
@@ -30,7 +31,7 @@ const Register = () => {
         }
 
         try {
-            const response = await axios.post('https://localhost:7055/api/FlightOwnerAccount/register', register);
+            const response = await axiosInstance.post('/FlightOwnerAccount/register', register);
             if (!response.data.flag) setError(response.data.message);
             else {
                 setError('');

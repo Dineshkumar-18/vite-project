@@ -20,10 +20,10 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
           </Link>
         </li>
         <li>
-          <a href="#" className="flex items-center p-3 hover:bg-blue-500 rounded-lg">
+          <Link to="/flight-owner/view-airlines" className="flex items-center p-3 hover:bg-blue-500 rounded-lg">
             <i className='bx bxs-plane-alt mr-3'></i>
             {isSidebarOpen && <span className="ml-3">Airline Management</span>}
-          </a>
+          </Link>
         </li>
         <li>
           <a href="#" className="flex items-center p-3 hover:bg-blue-500 rounded-lg">
