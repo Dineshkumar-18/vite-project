@@ -38,9 +38,9 @@ const convertSeatTypetoArray=(seatTypeString)=>
 }
 
 
-const SeatAllocation = ({layout,TotalColumns,classnames,rowCount,setSeatCount,disabledSeats,setDisabledSeats,role,isBookingStarted}) => {
+const SeatAllocation = ({layout,TotalColumns,classnames,rowCount,setSeatCount,disabledSeats,setDisabledSeats,role,isBookingStarted,isPriceSetup,pricing}) => {
 
-  console.log(rowCount,classnames)
+  console.log(pricing)
   
   
   const [selectedSeat, setSelectedSeat] = useState(null);
@@ -51,6 +51,10 @@ const SeatAllocation = ({layout,TotalColumns,classnames,rowCount,setSeatCount,di
 
   const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
   const seatContainerRef = useRef(null);
+
+
+  const [editingSeat, setEditingSeat] = useState(null); // State to track which seat is being edited
+  const [newPrice, setNewPrice] = useState('');
 
 
 const seatClassColors = {
@@ -98,6 +102,10 @@ const seatTypePatterns = {
         top: seatRect.top - containerRect.top,
         left: seatRect.left - containerRect.left,
       });
+
+      setEditingSeat(seat);
+      setNewPrice('');
+
   
       setShowPopup(true); // Open the popup
     }
@@ -135,7 +143,7 @@ const seatTypePatterns = {
   console.log(seats)
   console.log(layout)
   
-  let seatType=''
+  let seatType='';
   if(layout) { seatType=convertSeatTypetoArray(seatTypePatterns[layout])}
   console.log(seats)
   console.log(seatType)
@@ -147,24 +155,22 @@ const seatTypePatterns = {
 
   console.log(seatHeight,containerHeight)
 
-const handleClick=async()=>
-{
-  
-  //  const disabledSeatsArray = Array.from(disabledSeats);
-   
-  //  const requestBody = {
-  //   flightId: flightId,
-  //   seats: disabledSeatsArray
-  // };
-  // try{
-  //  const response=await axiosInstance.post('/UnavailableSeat',requestBody);
-  //  console.log(response.data)
-  // }
-  // catch(error)
-  // {
-  //   console.log(error)
-  // }
-}
+
+const getSeatPrice = (seatClass, seatType) => {
+  if (isPriceSetup) { // Check if pricing setup is enabled
+    return pricing[seatClass]?.[seatType] || 0;
+  }
+  return 0; // Default price if pricing is not set up
+};
+
+const saveNewPrice = () => {
+  if (editingSeat && newPrice) {
+    handleUpdateSeatPrice(editingSeat, newPrice); // Call the function to update the price in the database
+    setEditingSeat(null); // Close the price editor
+  }
+};
+
+
 
   let rowNumber=1;
 
@@ -274,6 +280,7 @@ const handleClick=async()=>
                 {/* Container for each row */}
                 {seats.map((seat, columnIndex) => {
                   const seatIdentifier = `${rowNumber}${seat}`;    // Assuming seats array contains column identifiers (e.g., ['A', 'B', 'C'])
+                   const price = getSeatPrice(className.toLowerCase(), seatType[columnIndex].toLowerCase())
                   return (
                     <div
                       key={`${className}-${rowIndex}-${columnIndex}`} // Unique key using className, rowIndex, and columnIndex
@@ -286,8 +293,10 @@ const handleClick=async()=>
     <Tippy
       content={
         <div>
-          <div>{className.toUpperCase()}</div>
+          <div className='text-center'>{className.toUpperCase()}</div>
           <div className='text-center'>{seatType[columnIndex]}</div>
+          {isPriceSetup ? <div className='text-center'>Price: ₹{price}</div>:''}
+
         </div>
       }
       placement="top"
@@ -302,6 +311,9 @@ const handleClick=async()=>
               ? 'bg-green-500 text-white' // Selected seat style
               : 'bg-[#471D36] text-white' // Available seat for all roles // Available seat for all roles
         }`}
+
+     
+
         onClick={(event) => {
             handleSeatClick(seatIdentifier, className, event);
         }}
@@ -345,7 +357,21 @@ const handleClick=async()=>
         X
       </button>
 
-          <div>Seat Number: {selectedSeat}</div>
+          <div className='text-lg '>Seat Number: <span className='font-bold bg-red-500 px-2 py-1 rounded-lg text-white'>{selectedSeat}</span></div>
+          {editingSeat === selectedSeat && role === 'flightOwner' && (
+                                  <div>
+                                    <input
+                                      type="number"
+                                      value={newPrice}
+                                      onChange={(e) => setNewPrice(e.target.value)}
+                                      placeholder="Set new price"
+                                      className="mt-2 p-1 outline-none focus:ring-1 focus:ring-blue-500 rounded"
+                                    />
+                                    <button onClick={saveNewPrice} className="mt-2 bg-green-500 text-white px-2 py-1 rounded">
+                                      Update Price
+                                    </button>
+                                  </div>
+                                )}
           <button
             onClick={handleDeleteSeat}
             className="mt-2 px-4 py-2 bg-red-500 text-white rounded"

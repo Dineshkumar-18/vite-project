@@ -72,24 +72,28 @@ const FlightDetails = () => {
             seatLayoutInfo.forEach(seatLayout => {
                 const classType = seatLayout.classType.toLowerCase(); // Convert to lower case for consistency
 
-                // Add class type to the set for unique values
-                classNamesSet.add(classType);
+               
 
                 // Increment the corresponding row count
                 if (classType === 'economy') {
                     updatedRowCount['economy-row-count'] += seatLayout.rowCount;
+                    classNamesSet.add('economy');
                 } else if (classType === 'business') {
                     updatedRowCount['business-row-count'] += seatLayout.rowCount;
+                    classNamesSet.add('business'); 
                 } else if (classType === 'first') {
                     updatedRowCount['first-row-count'] += seatLayout.rowCount;
+                    classNamesSet.add('first');
                 } else if (classType === 'premium') {
                     updatedRowCount['premium-row-count'] += seatLayout.rowCount;
+                    classNamesSet.add('premium');
                 }
             });
 
+            const orderedClassNames = ['first', 'business', 'premium', 'economy'].filter(name => classNamesSet.has(name));
             // Update state with the final values
             setRowCount(updatedRowCount);
-            setClassnames(Array.from(classNamesSet));
+            setClassnames(orderedClassNames);
         }
     }, [seatLayoutInfo]);
    
@@ -187,7 +191,6 @@ const FlightDetails = () => {
         </div>
         {layoutOpen && 
             <SeatAllocation layout={seatLayoutInfo[0].layoutPattern} TotalColumns={seatLayoutInfo[0].totalColumns} setSeatCount={() => {}} disabledSeats={disabledSeats} setDisabledSeats={setDisabledSeats} classnames={classnames} rowCount={rowCount} role="flightOwner" isBookingStarted={false}/>
-            
         }
         </div>
       );    

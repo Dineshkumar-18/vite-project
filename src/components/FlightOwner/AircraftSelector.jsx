@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 const aircraftData = {
   Airbus: ["A318", "A319", "A320", "A321", "A330", "A340", "A350", "A380"],
@@ -10,7 +10,7 @@ const aircraftData = {
 };
 
 
-const AircraftSelector = ({setAirCraftType}) => {
+const AircraftSelector = ({setAirCraftType,initialAircraftType}) => {
   const [selectedManufacturer, setSelectedManufacturer] = useState("Airbus");
   const [selectedAircraft, setSelectedAircraft] = useState("");
 
@@ -23,6 +23,15 @@ const AircraftSelector = ({setAirCraftType}) => {
     setSelectedAircraft(e.target.value);
     setAirCraftType(`${selectedManufacturer}-${e.target.value}`); 
   };
+
+  useEffect(() => {
+    if (initialAircraftType) {
+      const [manufacturer, aircraft] = initialAircraftType.split("-");
+      setSelectedManufacturer(manufacturer);
+      setSelectedAircraft(aircraft);
+    }
+  }, [initialAircraftType]);
+
 
   return (
     <div className="space-y-4">

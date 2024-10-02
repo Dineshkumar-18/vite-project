@@ -24,6 +24,7 @@ import { configureInterceptors } from './utils/axiosInstance'
 import AirlineDetails from './components/FlightOwner/Airline/AirlineDetails'
 import FlightDetails from './components/FlightOwner/Flights/FlightDetails'
 import ScheduleFlights from './components/FlightOwner/Flights/ScheduleFlights'
+import { FlightProvider } from './context/FlightContext'
 
 
 
@@ -138,7 +139,10 @@ const App = () => {
             <Route path="view-airline/:id" element={<AirlineDetails/>}/>
 
             <Route path='flight/:id' element={<FlightDetails/>}/>
-            <Route path='flight/schedule/:id' element={<ScheduleFlights/>}/>
+            <Route path='flight/schedule/:id' element={<FlightProvider>
+                                    <ScheduleFlights />
+                                </FlightProvider>}/>
+            <Route path='flight/layout/edit/:id' element={<AddFlightForm/>}/>
           </Route>
 
       </Routes>

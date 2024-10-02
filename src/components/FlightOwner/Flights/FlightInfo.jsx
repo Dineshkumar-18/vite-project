@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { FaPlaneDeparture, FaPlaneArrival, FaClock, FaCalendarAlt, FaUserTie, FaDollarSign } from 'react-icons/fa'; // Import icons
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../../../utils/axiosInstance';
 import SeatAllocation from '../../SeatAllocation';
+import { useFlightContext } from '../../../context/FlightContext';
 
 const FlightInfo = () => {
      
     const {id}=useParams()
+    const {setFlightData}=useFlightContext()
+    const navigate=useNavigate()
     const [flight, setFlight] = useState({});
     const [loading,setLoading]=useState(false)
     const [layoutOpen,setLayoutOpen]=useState(false)
@@ -19,6 +22,7 @@ const FlightInfo = () => {
         'first-row-count': 0,
         'premium-row-count': 0,
     });
+
 
 
     useEffect(() => {
@@ -37,6 +41,10 @@ const FlightInfo = () => {
                     arrivalAirport: arrivalAirportResponse.data,
                 };
                 setFlight(flightWithAirports);
+                console.log(flightWithAirports)
+                setFlightData(flightWithAirports)
+            
+               
                
                 const seatLayoutResponse=await axiosInstance.get(`/SeatLayout/${id}`)
                 console.log(seatLayoutResponse.data)
@@ -55,7 +63,7 @@ const FlightInfo = () => {
             setLoading(false);  // Set loading to false after fetching
         };
       fetchFlightDetails();
-    }, [id]);
+    }, [id,setFlightData]);
 
 
     useEffect(() => {
@@ -77,18 +85,24 @@ const FlightInfo = () => {
                 // Increment the corresponding row count
                 if (classType === 'economy') {
                     updatedRowCount['economy-row-count'] += seatLayout.rowCount;
+                    classNamesSet.add('economy');
                 } else if (classType === 'business') {
                     updatedRowCount['business-row-count'] += seatLayout.rowCount;
+                    classNamesSet.add('business');
                 } else if (classType === 'first') {
                     updatedRowCount['first-row-count'] += seatLayout.rowCount;
+                    classNamesSet.add('first');
                 } else if (classType === 'premium') {
                     updatedRowCount['premium-row-count'] += seatLayout.rowCount;
+                    classNamesSet.add('premium');
                 }
             });
 
+            const orderedClassNames = ['first', 'business', 'premium', 'economy'].filter(name => classNamesSet.has(name));
+
             // Update state with the final values
             setRowCount(updatedRowCount);
-            setClassnames(Array.from(classNamesSet));
+            setClassnames(orderedClassNames);
         }
     }, [seatLayoutInfo]);
    
@@ -177,10 +191,7 @@ const FlightInfo = () => {
               <button className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-md transition duration-300" onClick={()=>setLayoutOpen(prev=>!prev)}>
                 View Seat Layout
               </button>
-            </div>
-
-            <div className="mt-6 text-center space-x-4">
-              <button className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-300" onClick={()=>setLayoutOpen(prev=>!prev)}>
+              <button className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-300" onClick={()=>navigate(`/flight-owner/flight/layout/edit/${id}`)}>
                 Edit Seat Layout
               </button>
             </div>

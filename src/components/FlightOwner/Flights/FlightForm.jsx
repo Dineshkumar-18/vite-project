@@ -1,9 +1,19 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import AirportSelect from "../../AirportSelect";
+import { useFlightContext } from "../../../context/FlightContext";
+import { useParams } from "react-router-dom";
+import axiosInstance from "../../../utils/axiosInstance";
+import SeatAllocation from "../../SeatAllocation";
 
 const FlightForm = () => {
   // State to handle form progress
   const [step, setStep] = useState(1);
+
+  const {flightData}=useFlightContext()
+
+  console.log(flightData)
+  const {id}=useParams()
+  
 
   const handleNext = () => setStep((prevStep) => Math.min(prevStep + 1, 4));
   const handlePrevious = () => setStep((prevStep) => Math.max(prevStep - 1, 1));
@@ -24,6 +34,85 @@ const FlightForm = () => {
  const [toLocation,setToLocation]=useState(0)
  const [error,setError]=useState('')
 
+ const [disabledSeats,setDisabledSeats]=useState(new Set())
+ const [loading,setLoading]=useState(false)
+ const [seatLayoutInfo,setSeatLayoutInfo]=useState([])
+ const [classnames, setClassnames] = useState([]);
+ const [rowCount, setRowCount] = useState({
+     'economy-row-count': 0,
+     'business-row-count': 0,
+     'first-row-count': 0,
+     'premium-row-count': 0,
+ });
+
+
+ 
+ useEffect(() => {
+
+  const fetchFlightDetails = async () => {
+      setLoading(true);
+      try {
+         
+          const seatLayoutResponse=await axiosInstance.get(`/SeatLayout/${id}`)
+          console.log(seatLayoutResponse.data)
+          setSeatLayoutInfo(seatLayoutResponse.data)
+
+          const unavailableSeatResponse=await axiosInstance.get(`UnavailableSeat/${id}`)
+          console.log(unavailableSeatResponse.data)
+          const data=unavailableSeatResponse.data;
+          const seatNumbers = data.map(seat => seat.seatNumber);
+          setDisabledSeats(new Set(seatNumbers));
+          
+
+      } catch (error) {
+          console.error("Error fetching flight details", error);
+      }
+      setLoading(false);  // Set loading to false after fetching
+  };
+fetchFlightDetails();
+}, [id]);
+
+
+useEffect(() => {
+  if (seatLayoutInfo.length > 0) {
+      const updatedRowCount = {
+          'economy-row-count': 0,
+          'business-row-count': 0,
+          'first-row-count': 0,
+          'premium-row-count': 0,
+      };
+      const classNamesSet = new Set();
+
+      seatLayoutInfo.forEach(seatLayout => {
+          const classType = seatLayout.classType.toLowerCase(); // Convert to lower case for consistency
+
+          // Add class type to the set for unique values
+          classNamesSet.add(classType);
+
+          // Increment the corresponding row count
+          if (classType === 'economy') {
+              updatedRowCount['economy-row-count'] += seatLayout.rowCount;
+              classNamesSet.add('economy');
+          } else if (classType === 'business') {
+              updatedRowCount['business-row-count'] += seatLayout.rowCount;
+              classNamesSet.add('business');
+          } else if (classType === 'first') {
+              updatedRowCount['first-row-count'] += seatLayout.rowCount;
+              classNamesSet.add('first');
+          } else if (classType === 'premium') {
+              updatedRowCount['premium-row-count'] += seatLayout.rowCount;
+              classNamesSet.add('premium');
+          }
+      });
+
+      const orderedClassNames = ['first', 'business', 'premium', 'economy'].filter(name => classNamesSet.has(name));
+
+      // Update state with the final values
+      setRowCount(updatedRowCount);
+      setClassnames(orderedClassNames);
+  }
+}, [seatLayoutInfo]);
+
 
   // Handle input changes
   const handleInputChange = (e) => {
@@ -34,7 +123,41 @@ const FlightForm = () => {
     });
   };
 
+
+  const pricing = {
+    economy: {
+      window: 100,
+      aisle: 120,
+      middle: 90,
+    },
+    business: {
+      window: 200,
+      aisle: 220,
+      middle: 180,
+    },
+    first: {
+      window: 100,
+      aisle: 120,
+      middle: 90,
+    },
+    premium: {
+      window: 200,
+      aisle: 220,
+      middle: 180,
+    }
+    // Add more classes as needed
+  };
+
+
+  if(!flightData || !flightData.departureAirport || !flightData.arrivalAirport)
+  {
+    return <div>Loading...</div>
+  }
+
+
   return (
+
+    <div>
     <div className="container mx-auto p-6 space-y-6">
       {/* Progress Bar */}
       <div className="relative mb-8">
@@ -74,7 +197,7 @@ const FlightForm = () => {
                 className="block text-lg font-semibold text-gray-700 mb-2">  
                 Departure Location
               </label>
-              <AirportSelect placeholder={"Departure"} Location={fromLocation} setLocation={setFromLocation} initialLocationId={1} error={error} inputstyling={`p-2 rounded-lg outline-none w-full border-gray-300 border p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none ${error ? 'border-2 border-red-500' : 'border-2 hover:bg-blue-'}`}
+              <AirportSelect placeholder={"Departure"} Location={fromLocation} setLocation={setFromLocation} initialLocationId={flightData.departureAirport.airportId} error={error} inputstyling={`p-2 rounded-lg outline-none w-full border-gray-300 border p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none ${error ? 'border-2 border-red-500' : 'border-2 hover:bg-blue-'}`}
               dropdownstyling="bg-white hover:text-white"/>
 
             </div>
@@ -84,7 +207,7 @@ const FlightForm = () => {
                 className="block text-lg font-semibold text-gray-700 mb-2">  
                 Arrival Location
               </label>
-              <AirportSelect placeholder={"Departure"} Location={toLocation} setLocation={setToLocation} initialLocationId={2} error={error} inputstyling={`p-2 rounded-lg outline-none w-full border-gray-300 border p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none ${error ? 'border-2 border-red-500' : 'border-2 hover:bg-blue-'}`}
+              <AirportSelect placeholder={"Departure"} Location={toLocation} setLocation={setToLocation} initialLocationId={flightData.arrivalAirport.airportId} error={error} inputstyling={`p-2 rounded-lg outline-none w-full border-gray-300 border p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none ${error ? 'border-2 border-red-500' : 'border-2 hover:bg-blue-'}`}
               dropdownstyling="bg-white hover:text-white"/>
 
             </div>
@@ -249,6 +372,9 @@ const FlightForm = () => {
           )}
         </div>
       </div>
+    </div>
+     <div className="font-bold text-2xl text-center mb-4">Flight Schedule Pricing Setup</div>
+     <SeatAllocation layout={seatLayoutInfo[0].layoutPattern} TotalColumns={seatLayoutInfo[0].totalColumns} setSeatCount={() => {}} disabledSeats={disabledSeats} setDisabledSeats={setDisabledSeats} classnames={classnames} rowCount={rowCount} role="flightOwner" isBookingStarted={false} isPriceSetup={true} pricing={pricing}/>
     </div>
   );
 };
