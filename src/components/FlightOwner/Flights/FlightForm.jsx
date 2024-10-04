@@ -1,9 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import AirportSelect from "../../AirportSelect";
 import { useFlightContext } from "../../../context/FlightContext";
 import { useParams } from "react-router-dom";
 import axiosInstance from "../../../utils/axiosInstance";
 import SeatAllocation from "../../SeatAllocation";
+import UpdateFlightLayout from "./UpdateFlightLayout";
+import AddFlightForm from "../AddFlightForm";
+import axios from "axios";
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
 
 const FlightForm = () => {
   // State to handle form progress
@@ -11,117 +15,328 @@ const FlightForm = () => {
 
   const {flightData}=useFlightContext()
 
+  const [layout,setLayout]=useState([])
+
   console.log(flightData)
   const {id}=useParams()
+
+  const [isSaved, setIsSaved] = useState({ step1: false, step2: false, step3: false,step4:false });
+  const [cancellationFee, setCancellationFee] = useState({
+    flightScheduleId:'',
+    chargeRate: 0,
+    platformFee: 0,
+  });
+  
+ 
+
+
+ const [flightPricing,setFlightPricing]=useState(
+  {
+     basePrice: 0,
+    seasonalMultiplier: 1,
+    demandMultiplier: 1,
+    discount: 0,
+  }
+ )
+
+
+  const [fromLocation,setFromLocation]=useState(0)
+  const [toLocation,setToLocation]=useState(0)
+  const [error,setError]=useState('')
+  const [flightScheduleId,setFlightScheduleId]=useState(0)
+  const [openEditForm,setOpenEditForm]=useState(false)
+  const [classPricing, setClassPricing] = useState({});
+  const [showSuccess,setShowSuccess]=useState(false)
+  const componentRef = useRef(null);
+
+  const [classWithBasePrice,setClassWithBasePrice]=useState([]) 
+
+    const [flightScheduleData,setFlightScheduleData]=useState(
+    {
+      departureAirportId: fromLocation,
+      arrivalAirportId: toLocation,
+      departureTime: new Date().toISOString(),
+      arrivalTime: new Date().toISOString(),
+      totalSeats:0
+    }
+  )
+
+
+  useEffect(()=>
+  {
+    const fetchLayout=async()=>
+    {
+      const response=await axiosInstance.get(`/SeatLayout/${id}`);
+      console.log(response.data)
+      setLayout(response.data)
+    }
+   fetchLayout();
+  },[id])
+
+  const handleSeatPricingChange = (classType, seatType, value) => {
+    setSeatPricing(prev => ({
+      ...prev,
+      [classType]: {
+        ...prev[classType],
+        [seatType]: value,
+      },
+    }));
+  };
+
+
+
+  console.log(classPricing)
+
+  const generateClassWithBasePrice=(classPricing)=>
+  {
+    const result = [];
+
+    // Iterate over the object keys
+    for (const className in classPricing) {
+
+      console.log(className)
+        // Extract class object
+        const classData = classPricing[className];
+
+        const updatedClassName = className === 'Premium' ? 'Premium Economy' : className;
+        
+        // Create a new object with className and basePrice
+        const classInfo = {
+            className: updatedClassName,
+            basePrice: parseInt(classData.basePrice)
+        };
+        console.log(classInfo)
+        
+        // Add the new object to the result array
+        result.push(classInfo);
+    }
+     return result
+  }
+
+ const generateClassType=(classPricing)=>
+ {
+  const result = {};
+// Iterate over the object keys
+  for (const className in classPricing) {
+    // Extract class data
+    const classData = classPricing[className];
+
+    // Create an array of prices (window, middle, aisle)
+    const pricesArray = [
+        parseInt(classData.window), // Window price
+        parseInt(classData.middle), // Middle price
+        parseInt(classData.aisle)   // Aisle price
+    ];
+
+    // Conditional check to rename 'Premium' to 'Premium Economy'
+    const updatedClassName = className === 'Premium' ? 'Premium Economy' : className;
+
+    // Assign pricesArray to a new property with the updated class name
+    result[updatedClassName] = pricesArray;
+    console.log(result[updatedClassName])
+   }
+  return result;
+ }
+
+ function getClassNames(pricingData) {
+  return Object.keys(pricingData).map(className => {
+      return className === "Premium" ? "Premium Economy" : className;
+  });
+}
+
+  console.log(generateClassWithBasePrice(classPricing))
+  console.log(generateClassType(classPricing))
+  console.log(getClassNames(classPricing))
+
+
+
+console.log(flightPricing)
+
+
+  const handleNext = async () => {
+    console.log("next is clicked")
+    let apiResponse;
+    try {
+       console.log(isSaved)
+        switch (step) {
+            case 1:
+                // Validate model A data
+                  if(!isSaved.step1){
+
+                    const ModifiedflightScheduleData = {
+                      ...flightScheduleData, // Spread existing properties
+                      arrivalTime: formatDateToUTC(flightScheduleData.arrivalTime), // Format arrival time
+                      departureTime: formatDateToUTC(flightScheduleData.departureTime) // Format departure time
+                  };
+                  console.log(ModifiedflightScheduleData)
+                    
+                    apiResponse = await saveModel(`/Flight/addSchedule/${id}`, ModifiedflightScheduleData);
+                    console.log(apiResponse);
+                    setFlightScheduleId(parseInt(apiResponse.message))
+                    setIsSaved((prev) => ({ ...prev, step1: true }));
+                    setStep(2)
+                    console.log("inside step 2")
+                  }
+                  else
+                  {
+                    setStep(2);
+                  }
+                 
+                break;
+            case 2:
+                  if(!isSaved.step2){
+                    console.log(flightPricing)
+                     
+                    apiResponse = await saveModel(`/Flight/add-pricing/${flightScheduleId}`, flightPricing); // Replace with your endpoint
+                    console.log(apiResponse);
+                    setIsSaved((prev) => ({ ...prev, step2: true }));
+                    setStep(3)
+                  }
+                  else
+                  {
+                    setStep(3);
+                  }
+                
+                break;
+            case 3:
+                // Validate model C data
+                if(!isSaved.step3){
+                   console.log("inside step3")
+                    const classBasePrice=generateClassWithBasePrice(classPricing);
+                    console.log(classBasePrice)
+                    apiResponse = await saveModel(`/Flight/add-class-pricing/${flightScheduleId}`, classBasePrice); // Replace with your endpoint
+                    console.log(apiResponse);
+
+                   
+                    const seatTypeValue=generateClassType(classPricing)
+                    const seatTypePricingResponse=await saveModel(`/Flight/add-classType-pricing/${flightScheduleId}`,seatTypeValue)
+                    console.log(seatTypePricingResponse)
+                    // Optionally navigate to a summary or final step
+                    const seatCreation=getClassNames(classPricing);
+                    console.log(seatCreation)
+                    const seatAdd=await saveModel(`/Flight/add-seat-pricing/${flightScheduleId}`,{classNames:seatCreation});
+                    console.log(seatAdd)
+                    setIsSaved((prev) => ({ ...prev, step3: true }));
+                }
+                setStep(4);
+                break;
+
+              case 4:
+                   if(!isSaved.step4)
+                   {
+                     console.log("inside cancellation")
+                     const cancellationFeeUpdated={...cancellationFee,flightScheduleId:flightScheduleId}
+                     const cancellationFeeResponse=await saveModel(`/CancellationFee`,cancellationFeeUpdated);
+                     console.log(cancellationFeeResponse)
+
+                     const ApprovedToSchedule=await axiosInstance.put(`Flight/updateStatusReadyToSchedule/${flightScheduleId}`)
+                     console.log(ApprovedToSchedule)
+                   }
+
+                   componentRef.current?.scrollIntoView({ behavior: 'smooth' });
+                   setShowSuccess(true);
+                   setTimeout(() => setShowSuccess(false), 3000);
+               
+                  break;
+            default:
+                break;
+        }
+    } catch (error) {
+        console.error('Error during API call:', error);
+        // Optionally handle the error, show a notification, etc.
+    }
+};
+
+
+console.log(flightScheduleId)
+
+
+function formatDateToUTC(dateString) {
+  // Create a new Date object
+  const date = new Date(dateString);
+
+  // Get the UTC time
+  const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+  
+  // Return the formatted string in the required format
+  return utcDate.toISOString(); // This will give you the format "2024-10-03T11:19:55.525Z"
+}
+
+      
+
+
+      const saveModel = async (url, payload) => {
+        try {
+            const response = await axiosInstance.post(url, payload);
+            return response.data; // Return the response data for further use
+        } catch (error) {
+            console.error(error);
+            throw error; // Re-throw the error to handle it in the calling function
+        }
+    };
   
 
-  const handleNext = () => setStep((prevStep) => Math.min(prevStep + 1, 4));
+
+    
+   
   const handlePrevious = () => setStep((prevStep) => Math.max(prevStep - 1, 1));
 
   // Example form data state
-  const [formData, setFormData] = useState({
-    departureAirportId: "",
-    arrivalAirportId: "",
-    departureTime: "",
-    arrivalTime: "",
-    basePrice: "",
-    seasonalMultiplier: "",
-    demandMultiplier: "",
-    discount: "",
-    classPricing: [],
-  });
- const [fromLocation,setFromLocation]=useState(0)
- const [toLocation,setToLocation]=useState(0)
- const [error,setError]=useState('')
-
- const [disabledSeats,setDisabledSeats]=useState(new Set())
- const [loading,setLoading]=useState(false)
- const [seatLayoutInfo,setSeatLayoutInfo]=useState([])
- const [classnames, setClassnames] = useState([]);
- const [rowCount, setRowCount] = useState({
-     'economy-row-count': 0,
-     'business-row-count': 0,
-     'first-row-count': 0,
-     'premium-row-count': 0,
- });
-
-
+  
  
- useEffect(() => {
 
-  const fetchFlightDetails = async () => {
-      setLoading(true);
-      try {
-         
-          const seatLayoutResponse=await axiosInstance.get(`/SeatLayout/${id}`)
-          console.log(seatLayoutResponse.data)
-          setSeatLayoutInfo(seatLayoutResponse.data)
-
-          const unavailableSeatResponse=await axiosInstance.get(`UnavailableSeat/${id}`)
-          console.log(unavailableSeatResponse.data)
-          const data=unavailableSeatResponse.data;
-          const seatNumbers = data.map(seat => seat.seatNumber);
-          setDisabledSeats(new Set(seatNumbers));
-          
-
-      } catch (error) {
-          console.error("Error fetching flight details", error);
-      }
-      setLoading(false);  // Set loading to false after fetching
-  };
-fetchFlightDetails();
-}, [id]);
+useEffect(()=>
+{
+  if(flightData && flightData.departureAirport && flightData.arrivalAirport)
+  setFlightScheduleData((prev)=>({...prev,
+    departureAirportId: flightData.departureAirport.airportId,
+    arrivalAirportId: flightData.arrivalAirport.airportId,
+    totalSeats: flightData.totalSeats
+  }))
+},[flightData])
+ 
 
 
-useEffect(() => {
-  if (seatLayoutInfo.length > 0) {
-      const updatedRowCount = {
-          'economy-row-count': 0,
-          'business-row-count': 0,
-          'first-row-count': 0,
-          'premium-row-count': 0,
-      };
-      const classNamesSet = new Set();
 
-      seatLayoutInfo.forEach(seatLayout => {
-          const classType = seatLayout.classType.toLowerCase(); // Convert to lower case for consistency
-
-          // Add class type to the set for unique values
-          classNamesSet.add(classType);
-
-          // Increment the corresponding row count
-          if (classType === 'economy') {
-              updatedRowCount['economy-row-count'] += seatLayout.rowCount;
-              classNamesSet.add('economy');
-          } else if (classType === 'business') {
-              updatedRowCount['business-row-count'] += seatLayout.rowCount;
-              classNamesSet.add('business');
-          } else if (classType === 'first') {
-              updatedRowCount['first-row-count'] += seatLayout.rowCount;
-              classNamesSet.add('first');
-          } else if (classType === 'premium') {
-              updatedRowCount['premium-row-count'] += seatLayout.rowCount;
-              classNamesSet.add('premium');
-          }
-      });
-
-      const orderedClassNames = ['first', 'business', 'premium', 'economy'].filter(name => classNamesSet.has(name));
-
-      // Update state with the final values
-      setRowCount(updatedRowCount);
-      setClassnames(orderedClassNames);
-  }
-}, [seatLayoutInfo]);
-
+const handleSubmit=(e)=>
+{
+  e.preventDefault();
+  console.log("form submission")
+}
 
   // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+    setFlightScheduleData({
+      ...flightScheduleData,
       [name]: value,
     });
   };
+
+  const handlePriceChange=(e)=>
+  {
+    const { name, value } = e.target;
+    setFlightPricing({
+      ...flightPricing,
+      [name]: parseInt(value),
+    });
+  }
+
+  const handleClassPriceChange = (classType, field, value) => {
+    setClassPricing(prev => ({
+      ...prev,
+      [classType]: {
+        ...prev[classType],
+        [field]: value,
+      },
+    }));
+  };
+
+
+  console.log(classPricing)
+
+
+
 
 
   const pricing = {
@@ -132,7 +347,7 @@ useEffect(() => {
     },
     business: {
       window: 200,
-      aisle: 220,
+      aisle: 220, 
       middle: 180,
     },
     first: {
@@ -145,19 +360,45 @@ useEffect(() => {
       aisle: 220,
       middle: 180,
     }
-    // Add more classes as needed
+
+  };
+
+  const handleBatchUpdatePrices = (seatPriceUpdates) => {
+    // Here you would update the pricing data in your database or state
+    console.log('Updated prices:', seatPriceUpdates);
   };
 
 
+  const handleCancellationChange = (e) => {
+    const { name, value } = e.target;
+    setCancellationFee((prevState) => ({
+      ...prevState,
+      [name]: name === "chargeRate" || name === "platformFee" ? parseFloat(value) : value,
+    }));
+  };
+  
+  
+
+  
+
   if(!flightData || !flightData.departureAirport || !flightData.arrivalAirport)
   {
+  
     return <div>Loading...</div>
-  }
+  } 
 
 
   return (
 
-    <div>
+    
+    <div ref={componentRef}>
+      {showSuccess && (
+      <div className="flex items-center justify-between p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg transition-opacity duration-500 ease-in-out">
+        <div className="flex items-center">
+          <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
+          <p className='text-lg'>Flight Scheduled Successfully!</p>
+        </div>
+      </div>)}
     <div className="container mx-auto p-6 space-y-6">
       {/* Progress Bar */}
       <div className="relative mb-8">
@@ -171,8 +412,8 @@ useEffect(() => {
           <span className={`w-1/4 ${step >= 3 ? step>=4 ? "text-green-500": "text-red-500" : "text-gray-500"} text-center font-bold`}>
             Step 3: Class Pricing
           </span>
-          <span className={`w-1/4 ${step >= 4 ? "text-yellow-500" : "text-gray-500"} text-center`}>
-            Step 4: Review
+          <span className={`w-1/4 ${step >= 4 ? step>=5 ? "text-green-500": "text-red-500" : "text-gray-500"} text-center font-bold`}>
+            Step 3: Cancellation Fee Setup
           </span>
         </div>
         <div className="w-full bg-gray-200 h-1 rounded-full">
@@ -221,7 +462,7 @@ useEffect(() => {
                   id="departureTime"
                   name="departureTime"
                   required
-                  value={formData.departureTime}
+                  value={flightScheduleData.departureTime}
                   onChange={handleInputChange}
                   className="w-full border-gray-300 border rounded-lg p-3 focus:outline-none"
                 />
@@ -235,7 +476,7 @@ useEffect(() => {
                   id="arrivalTime"
                   required
                   name="arrivalTime"
-                  value={formData.arrivalTime}
+                  value={flightScheduleData.arrivalTime}
                   onChange={handleInputChange}
                   className="w-full border-gray-300 border rounded-lg p-3 focus:outline-none"
                 />
@@ -255,8 +496,8 @@ useEffect(() => {
                   type="number"
                   id="basePrice"
                   name="basePrice"
-                  value={formData.basePrice}
-                  onChange={handleInputChange}
+                  value={flightPricing.basePrice}
+                  onChange={handlePriceChange}
                   className="w-full border-gray-300 border rounded-lg p-3 focus:outline-none"
                 />
               </div>
@@ -268,8 +509,8 @@ useEffect(() => {
                   type="number"
                   id="seasonalMultiplier"
                   name="seasonalMultiplier"
-                  value={formData.seasonalMultiplier}
-                  onChange={handleInputChange}
+                  value={flightPricing.seasonalMultiplier}
+                  onChange={handlePriceChange}
                   className="w-full border-gray-300 border rounded-lg p-3 focus:outline-none"
                 />
               </div>
@@ -281,8 +522,8 @@ useEffect(() => {
                   type="number"
                   id="demandMultiplier"
                   name="demandMultiplier"
-                  value={formData.demandMultiplier}
-                  onChange={handleInputChange}
+                  value={flightPricing.demandMultiplier}
+                  onChange={handlePriceChange}
                   className="w-full border-gray-300 border rounded-lg p-3 focus:outline-none"
                 />
               </div>
@@ -294,8 +535,8 @@ useEffect(() => {
                   type="number"
                   id="discount"
                   name="discount"
-                  value={formData.discount}
-                  onChange={handleInputChange}
+                  value={flightPricing.discount}
+                  onChange={handlePriceChange}
                   className="w-full border-gray-300 border rounded-lg p-3 focus:outline-none"
                 />
               </div>
@@ -305,42 +546,96 @@ useEffect(() => {
         {step === 3 && (
           <div>
             <h2 className="text-xl font-bold mb-4">Step 3: Class Level Pricing</h2>
-            <div>
-              {/* Class-level Pricing */}
-              {/* Example of adding multiple class pricing */}
-              {formData.classPricing.map((classItem, index) => (
-                <div key={index} className="mb-4">
-                  <label className="block text-lg font-semibold text-gray-700">
-                    {classItem.className} - Total Seats: {classItem.totalSeats}
-                  </label>
-                  <input
-                    type="number"
-                    value={classItem.basePrice}
-                    onChange={(e) =>
-                      handleInputChange({
-                        target: {
-                          name: `classPricing[${index}].basePrice`,
-                          value: e.target.value,
-                        },
-                      })
-                    }
-                    className="w-full border-gray-300 border rounded-lg p-3 focus:outline-none"
-                    placeholder="Base Price"
-                  />
-                </div>
-              ))}
-            </div>
+            {/* <div className="p-2 bg-yellow-200 rounded-md flex items-center justify-between">
+            <p className=""><span className="font-bold">Note: </span>If you want update the flight layout update before setting the price </p>
+            <button
+              type="submit"
+              className="bg-green-500 hover:bg-green-600 text-white py-3 px-6 rounded mr-20"
+              onClick={()=>setOpenEditForm(true)}
+            >
+              Update Layout
+            </button>
+             
+            </div> */}
+              
+
+          <div className="p-4">
+      {layout.map((flightClass,index) => (
+        <div key={index} className="mb-6 border p-4 rounded shadow">
+          <h2 className="text-lg font-bold">{flightClass.classType}</h2>
+
+          {/* Input for Base Price */}
+          <div className="mb-4">
+            <label className="font-medium">Base Price</label>
+            <input
+              type="number"
+              value={classPricing[flightClass.classType]?.basePrice || ''}
+              onChange={(e) => handleClassPriceChange(flightClass.classType, 'basePrice', e.target.value)}
+              className="border rounded p-2 w-full"
+              placeholder={`Base Price for ${flightClass.classType}`}
+            />
+          </div>
+
+          {/* Inputs for Seat Type Pricing */}
+          <div className="grid grid-cols-3 gap-4">
+            {['window', 'aisle', 'middle'].map(seatType => (
+              <div key={seatType} className="flex flex-col">
+                <label className="font-medium capitalize">{seatType} Price</label>
+                <input
+                  type="number"
+                  value={classPricing[flightClass.classType]?.[seatType] || ''}
+                  onChange={(e) => handleClassPriceChange(flightClass.classType, seatType, e.target.value)}
+                  className="border rounded p-2"
+                  placeholder={`Price for ${seatType}`}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+    </div>
+            
           </div>
         )}
-        {step === 4 && (
-          <div>
-            <h2 className="text-xl font-bold mb-4">Step 4: Review and Submit</h2>
-            {/* Review Data */}
-            <pre className="p-4 bg-gray-100 rounded-lg">
-              {JSON.stringify(formData, null, 2)}
-            </pre>
-          </div>
-        )}
+
+{step === 4 && (
+  <div>
+    <h2 className="text-xl font-bold mb-4">Step 4: Cancellation Fee Setup</h2>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Charge Rate */}
+      <div>
+        <label htmlFor="chargeRate" className="block text-lg font-semibold text-gray-700">
+          Charge Rate:
+        </label>
+        <input
+          type="number"
+          id="chargeRate"
+          name="chargeRate"
+          value={cancellationFee.chargeRate}
+          onChange={handleCancellationChange}
+          className="w-full border-gray-300 border rounded-lg p-3 focus:outline-none"
+        />
+      </div>
+
+      {/* Platform Fee */}
+      <div>
+        <label htmlFor="platformFee" className="block text-lg font-semibold text-gray-700">
+          Platform Fee:
+        </label>
+        <input
+          type="number"
+          id="platformFee"
+          name="platformFee"
+          value={cancellationFee.platformFee}
+          onChange={handleCancellationChange}
+          className="w-full border-gray-300 border rounded-lg p-3 focus:outline-none"
+        />
+      </div>
+    </div>
+  </div>
+)}
+      
 
         {/* Navigation Buttons */}
         <div className="flex justify-between mt-6">
@@ -362,10 +657,11 @@ useEffect(() => {
               Next
             </button>
           )}
-          {step === 4 && (
+          {step ===4 && (
             <button
               type="submit"
               className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded"
+              onClick={handleNext}
             >
               Submit
             </button>
@@ -373,8 +669,16 @@ useEffect(() => {
         </div>
       </div>
     </div>
-     <div className="font-bold text-2xl text-center mb-4">Flight Schedule Pricing Setup</div>
-     <SeatAllocation layout={seatLayoutInfo[0].layoutPattern} TotalColumns={seatLayoutInfo[0].totalColumns} setSeatCount={() => {}} disabledSeats={disabledSeats} setDisabledSeats={setDisabledSeats} classnames={classnames} rowCount={rowCount} role="flightOwner" isBookingStarted={false} isPriceSetup={true} pricing={pricing}/>
+    <div className="flex items-center justify-center gap-20 mb-5">
+        
+     </div>
+     {
+        openEditForm && <UpdateFlightLayout onClose={() => setOpenEditForm(false)}
+/>
+        // <UpdateFlightLayout flightData={flightScheduleData} selectedClasses={selectedClasses} setSelectedClasses={setSelectedClasses} rowCount={rowCount} handleChangeRowCount={handleChangeRowCount} seatCount={seatCount} handleChangeSeatCount={handleChangeSeatCount} handleSubmit={handleSubmit}/>
+     }
+     
+    
     </div>
   );
 };

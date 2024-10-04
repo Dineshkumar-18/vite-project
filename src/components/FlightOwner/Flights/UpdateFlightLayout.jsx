@@ -1,12 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import AircraftSelector from './AircraftSelector';
-import SeatAllocation from '../SeatAllocation'
-import axiosInstance from '../../utils/axiosInstance';
-import AirportSelect from '../AirportSelect';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
+import SeatAllocation from '../../SeatAllocation';
+import axiosInstance from '../../../utils/axiosInstance';
 
-const AddFlightForm = () => {
+
+const UpdateFlightLayout = ({flightScheduleId}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const {id}=useParams()
@@ -298,14 +297,7 @@ const handleChangeSeatCount=(e)=>
       const response=await axiosInstance.get('/Airlines/airlinesByflightowner');
       console.log(response.data)
       setAirlines(response.data)
-
-      if (response.data.length > 0 && !flightData.airlineId) {
-        setFlightData((prevData) => ({
-          ...prevData,
-          airlineId: response.data[0].airlineId, // Pre-select first airline
-        }));
      }
-    }
      fetchAirlines();
   },[])
 
@@ -416,7 +408,7 @@ const handleChangeSeatCount=(e)=>
   
     try {
       console.log(seatLayouts);
-      console.log(flightData)
+  
       // Create Flight and get flightId
       const flightResponse = await axiosInstance.post('/Flight/add', flightData);
       const newFlightId = flightResponse.data.data;  // Store the new FlightId
@@ -458,7 +450,7 @@ const handleChangeSeatCount=(e)=>
   
   const resetFormFields = () => {
     setFlightData({
-      airlineId: "",
+      airlineId: 0,
       flightNumber: '',
       airCraftType: "",
       flightType: 'Domestic',
@@ -823,54 +815,6 @@ const handleChangeSeatCount=(e)=>
 
         <div className="bg-white p-8 rounded-lg shadow-md">
           <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Airline Selection */}
-            <div className="bg-white p-4 rounded-lg shadow-sm">
-              <label
-                htmlFor="airline"
-                className="block text-lg font-semibold text-gray-700 mb-1"
-              >
-                Select Airline:
-              </label>
-              <select
-                id="airline"
-                name="airlineId"
-                value={flightData.airlineId || 0}
-                required
-                onChange={handleInputChange}
-                className="w-full border-gray-300 border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              >
-                {airlines.map((airline)=>(
-                  <option key={parseInt(airline.airlineId)} value={parseInt(airline.airlineId)}>{airline.airlineName}</option>
-                ))}
-                </select>
-            </div>
-
-            {/* Flight Number */}
-            <div className="p-4 rounded-lg shadow-sm">
-              <label
-                htmlFor="flight-number"
-                className="block text-lg font-semibold text-gray-700 mb-1"
-              >
-                Enter Flight Number:
-              </label>
-              <input
-                type="text"
-                value={flightData.flightNumber}
-                onChange={handleInputChange}
-                id="flight-number"
-                required
-                name="flightNumber"
-                className="w-full border-gray-300 border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
-            </div>
-            
-
-            {/* Aircraft Selector */}
-            <div className="bg-white p-4 rounded-lg shadow-sm">
-              <AircraftSelector setAirCraftType={setAirCraftType} initialAircraftType={AirCraftType}/>
-            </div>
-
-            {/* Flight Classes */}
             <div className="p-4 rounded-lg shadow-sm space-y-6 text-lg">
               <label
                 htmlFor="flight-has"
@@ -929,64 +873,8 @@ const handleChangeSeatCount=(e)=>
                 </label>
               </div>  
             </div>
-            <div className="p-4 rounded-lg shadow-sm">
-              <label
-                htmlFor="flight-number"
-                className="block text-lg font-semibold text-gray-700 mb-2"
-              >
-                Flight Type:
-                </label>
-              <select className="w-full border-gray-300 border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none" name="flightType" value={flightData.flightType} onChange={handleInputChange} required>
-                <option value="Domestic">Domestic</option>
-                <option value="International">International</option>
-              </select>
-            </div>
-
-            <div className='p-4 rounded-lg shadow-sm'>
-              <label
-                htmlFor="flight-number"
-                className="block text-lg font-semibold text-gray-700 mb-2">  
-                Departure Location
-              </label>
-              <AirportSelect placeholder={"Departure"} Location={fromLocation} setLocation={setFromLocation} initialLocationId={flightData.departAirport} error={error} inputstyling={`p-2 rounded-lg outline-none w-full border-gray-300 border p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none ${error ? 'border-2 border-red-500' : 'border-2 hover:bg-blue-'}`}
-              dropdownstyling="bg-white hover:text-white"/>
-
-            </div>
-            <div className='p-4 rounded-lg shadow-sm'>
-              <label
-                htmlFor="flight-number"
-                className="block text-lg font-semibold text-gray-700 mb-2">  
-                Arrival Location
-              </label>
-              <AirportSelect placeholder={"Arrival"} Location={toLocation} setLocation={setToLocation} initialLocationId={flightData.arrivalAirport} error={error} inputstyling={`p-2 rounded-lg outline-none w-full border-gray-300 border p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none ${error ? 'border-2 border-red-500' : 'border-2 hover:bg-blue-'}`}
-              dropdownstyling="bg-white hover:text-white"/>
-
-            </div>
-
-
-            <div className="bg-white p-4 rounded-lg shadow-sm">
-              <label
-                htmlFor="seat-layout"
-                className="block text-lg font-semibold text-gray-700 mb-2"
-              >
-                Seat Layout:
-              </label>
-              <select
-                id="seat-layout"
-                name="seat-layout"
-                required
-                value={selectedLayout}
-                onChange={handleLayoutChange}
-                className="w-full border-gray-300 border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              >
-                <option value="">Select Layout</option>
-                {seatLayouts.map((layout) => (
-                  <option key={layout.value} value={layout.value}>
-                    {layout.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+            
+            
 
             {selectedClasses.economy &&
             (<div className="bg-white p-4 rounded-lg shadow-sm">
@@ -1188,7 +1076,7 @@ const handleChangeSeatCount=(e)=>
               />
             </div>
             <div className='col-span-2 mt-3'>
-              <SeatAllocation layout={selectedLayout} TotalColumns={TotalColumns} rowCount={rowCount} setSeatCount={setSeatCount} disabledSeats={disabledSeats} setDisabledSeats={setDisabledSeats} role="flightOwner" classnames={selectedClassesArray}/>
+              <SeatAllocation layout={selectedLayout} TotalColumns={TotalColumns} rowCount={rowCount} setSeatCount={setSeatCount} disabledSeats={disabledSeats} setDisabledSeats={setDisabledSeats} role="flightOwner" classnames={selectedClassesArray} isPriceSetup={true}/>
            </div>
             {/* Buttons */}
             <div className="flex justify-center gap-4 mt-6 col-span-2">
@@ -1215,4 +1103,4 @@ const handleChangeSeatCount=(e)=>
   );
 };
 
-export default AddFlightForm;
+export default UpdateFlightLayout;

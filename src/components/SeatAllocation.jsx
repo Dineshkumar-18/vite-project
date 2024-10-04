@@ -38,7 +38,7 @@ const convertSeatTypetoArray=(seatTypeString)=>
 }
 
 
-const SeatAllocation = ({layout,TotalColumns,classnames,rowCount,setSeatCount,disabledSeats,setDisabledSeats,role,isBookingStarted,isPriceSetup,pricing}) => {
+const SeatAllocation = ({layout,TotalColumns,classnames,rowCount,setSeatCount,disabledSeats,setDisabledSeats,role,isBookingStarted,isPriceSetup,pricing,handleBatchUpdatePrices}) => {
 
   console.log(pricing)
   
@@ -48,6 +48,7 @@ const SeatAllocation = ({layout,TotalColumns,classnames,rowCount,setSeatCount,di
   const [showPopup,setShowPopup]=useState(false)
   const [Class,SetClass]=useState('')
   const [selectedSeats, setSelectedSeats] = useState(new Set());
+  const [seatPriceUpdates, setSeatPriceUpdates] = useState({}); 
 
   const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 });
   const seatContainerRef = useRef(null);
@@ -157,18 +158,35 @@ const seatTypePatterns = {
 
 
 const getSeatPrice = (seatClass, seatType) => {
-  if (isPriceSetup) { // Check if pricing setup is enabled
+  if(isPriceSetup && !pricing)
+  {
+    return 0;
+  }
+  else if(isPriceSetup) { // Check if pricing setup is enabled
     return pricing[seatClass]?.[seatType] || 0;
   }
   return 0; // Default price if pricing is not set up
 };
 
 const saveNewPrice = () => {
-  if (editingSeat && newPrice) {
-    handleUpdateSeatPrice(editingSeat, newPrice); // Call the function to update the price in the database
-    setEditingSeat(null); // Close the price editor
+  if (editingSeat && newPrice && !isNaN(newPrice)) {
+    setSeatPriceUpdates((prevUpdates) => ({
+      ...prevUpdates,
+      [editingSeat]: newPrice // Store the updated price for this specific seat
+    }));
+    setEditingSeat(null); // Close the price editor after saving
   }
 };
+
+console.log(seatPriceUpdates);
+
+const handleSubmitSeatPrices = () => {
+  if (Object.keys(seatPriceUpdates).length > 0) {
+    handleBatchUpdatePrices(seatPriceUpdates); // Submit price updates to the parent
+    setSeatPriceUpdates({}); // Clear updates after submission
+  }
+};
+
 
 
 
@@ -295,7 +313,7 @@ const saveNewPrice = () => {
         <div>
           <div className='text-center'>{className.toUpperCase()}</div>
           <div className='text-center'>{seatType[columnIndex]}</div>
-          {isPriceSetup ? <div className='text-center'>Price: ₹{price}</div>:''}
+          {isPriceSetup ? <div className='text-center'>Price: ₹{seatPriceUpdates[seatIdentifier] || price}</div>:''}
 
         </div>
       }
@@ -358,7 +376,7 @@ const saveNewPrice = () => {
       </button>
 
           <div className='text-lg '>Seat Number: <span className='font-bold bg-red-500 px-2 py-1 rounded-lg text-white'>{selectedSeat}</span></div>
-          {editingSeat === selectedSeat && role === 'flightOwner' && (
+          {/* {editingSeat === selectedSeat && role === 'flightOwner' && (
                                   <div>
                                     <input
                                       type="number"
@@ -371,7 +389,7 @@ const saveNewPrice = () => {
                                       Update Price
                                     </button>
                                   </div>
-                                )}
+                                )} */}
           <button
             onClick={handleDeleteSeat}
             className="mt-2 px-4 py-2 bg-red-500 text-white rounded"

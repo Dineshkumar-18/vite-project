@@ -25,7 +25,7 @@ const LogoutConfirmation = ({ onConfirm, onCancel }) => {
         ) : (
           <>
             <i className="fa-solid fa-power-off text-red-600 fa-3x"></i>
-            <h2 className="text-xl font-semibold">Are you sure you want to log out?</h2>
+            <h2 className="text-xl font-semibold text-black">Are you sure you want to log out?</h2>
             <div className="flex justify-center gap-4 font-semibold">
               <button onClick={onCancel} className="bg-gray-200 text-black px-6 py-3 rounded">Cancel</button>
               <button onClick={handleLogout} className="bg-red-500 text-white px-6 py-3 rounded">
