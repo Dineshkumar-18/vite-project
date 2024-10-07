@@ -4,13 +4,13 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import ETicket from './ETicket';
 
-const TicketGenerator = () => {
+const TicketGenerator = ({paymentId}) => {
 
   const [ticketData, setTicketData] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    fetch('https://localhost:7055/api/Payment/paymentsuccess/5', {
+    fetch(`https://localhost:7055/api/Payment/paymentsuccess/${paymentId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
      // body: JSON.stringify({ paymentId: "some-payment-id" })
@@ -75,7 +75,11 @@ const TicketGenerator = () => {
       body: formData,
     })
     .then(response => response.json())
-    .then(data => console.log('Files successfully sent to backend:', data))
+    .then(data => {console.log('Files successfully sent to backend:', data);
+      navigate('/');
+    }
+     
+  )
     .catch(error => console.error('Error sending the PDFs:', error));
   };
   return (

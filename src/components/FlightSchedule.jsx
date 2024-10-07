@@ -51,6 +51,7 @@ const FlightSchedule = ({flightDetails}) => {
     return date.toLocaleDateString('en-GB', options); 
   }
   
+  console.log(flightDetails)
 
   return (
     <div className="flex flex-col bg-secondary shadow-lg rounded-lg mb-4 p-4">
@@ -58,9 +59,9 @@ const FlightSchedule = ({flightDetails}) => {
       <div className="flex justify-between items-center mb-2">
         <div className="flex items-center w-1/6">
           <img
-            src="" // Image source for airline logo
+            src={flightDetails.airlineImagePath} // Image source for airline logo
             alt="Airline Logo"
-            className="w-6 h-6 mr-2"
+            className="w-16 h-12 mr-2"
           />
           <div>
             <h1 className="text-lg font-semibold text-gray-800">{flightDetails.airlineName}</h1>
@@ -81,7 +82,7 @@ departureTime.substring(0,5)
             <h2 className="text-sm text-gray-500">{flightDetails.arrivalAirportIataCode}</h2>
           </div>
           <div className='w-1/6'>
-            <h1 className="text-lg text-black font-semibold">${flightDetails.flightPricings
+            <h1 className="text-lg text-black font-semibold">₹{flightDetails.flightPricings
 }</h1>
           </div>
         <div className='w-1/6'>

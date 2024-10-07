@@ -17,11 +17,11 @@ const FlightResults = () => {
       <SearchInput/>    
       <div className="grid grid-cols-6">
         {/* Sidebar for filters */}
-        <aside className="col-span-1 p-4 bg-secondary">
+        {/* <aside className="col-span-1 p-4 bg-secondary">
           <FilterSidebar />
-        </aside>
+        </aside> */}
         {/* Main content area for flight schedule */}
-        <main className="col-span-5">
+        <main className="col-span-6">
           <ScrollableDateRange />
           <FlightTable flightData={flightData}/>
         </main>

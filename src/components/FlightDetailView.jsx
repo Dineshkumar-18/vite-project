@@ -21,9 +21,9 @@ const FlightDetailView = ({flightDetails,formatDate,formatDuration}) => {
           <div className="grid grid-cols-5 gap-4 mb-2 items-center">
             <div className="flex flex-col">
                 <img
-                src="" // Image source for Indigo logo
+                src={flightDetails.airlineImagePath} // Image source for Indigo logo
                 alt="Indigo"
-                className="w-8 h-8 mb-2"
+                className="w-16 h-12 mb-2"
                 />
                 <h2 className="text-sm font-medium text-gray-800">{flightDetails.airlineName}</h2>
             </div>

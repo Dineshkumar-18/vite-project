@@ -1,45 +1,37 @@
 import React from 'react';
 
-const Footer = () => {
+const FooterInfo = () => {
   return (
-    <footer className="bg-gray-900 text-white py-8">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-wrap justify-between">
-          {/* Company Info */}
-          <div className="w-full md:w-1/3 mb-6">
-            <h2 className="text-lg font-semibold mb-4">AeroFlex</h2>
-            <p className="text-sm">
-              At AeroFlex, we provide the best flight booking experience with flexible options and great customer service. Fly with ease and comfort with us.
-            </p>
-          </div>
-
-          {/* Links */}
-          <div className="w-full md:w-1/3 mb-6">
-            <h2 className="text-lg font-semibold mb-4">Quick Links</h2>
+    
+<footer className="bg-[#00163D] text-white">
+ <div class="bg-[#00163D] text-white">
+  <div class="container mx-auto py-12 px-4 md:px-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8 "> 
+      <div class="space-y-4 text-left">
+        <h3 class="text-xl font-bold">AeroFlex</h3>
+        <p>
+          Where Excellence Takes Flight. With a strong commitment to customer
+          satisfaction and a passion for air travel, Aeroflex offers exceptional
+          service and seamless journeys.
+        </p>
+        <p>
+          From friendly smiles to state-of-the-art aircraft, we connect the world,
+          ensuring safe, comfortable, and unforgettable experiences.
+        </p>
+      </div>
+      <div className="w-full mb-6">
+            <h2 className="text-xl font-bold mb-4">Quick Links</h2>
             <ul className="text-sm">
-              <li className="mb-2"><a href="/" className="hover:underline">Home</a></li>
-              <li className="mb-2"><a href="/flights" className="hover:underline">Flights</a></li>
-              <li className="mb-2"><a href="/contact" className="hover:underline">Contact Us</a></li>
-              <li className="mb-2"><a href="/about" className="hover:underline">About Us</a></li>
-              <li className="mb-2"><a href="/faq" className="hover:underline">FAQ</a></li>
+              <li className="mb-2"><a href="/" className="hover:underline hover:text-blue-400">Home</a></li>
+              <li className="mb-2"><a href="/contact" className="hover:underline hover:text-blue-400">Contact Us</a></li>
+              <li className="mb-2"><a href="/about" className="hover:underline hover:text-blue-400">About Us</a></li>
+              <li className="mb-2"><a href="/faq" className="hover:underline  hover:text-blue-400">FAQ</a></li>
             </ul>
-          </div>
+      </div>
 
-          {/* Contact Info */}
-          <div className="w-full md:w-1/3 mb-6">
-            <h2 className="text-lg font-semibold mb-4">Contact Us</h2>
-            <ul className="text-sm">
-              <li className="mb-2">Phone: +1 234 567 890</li>
-              <li className="mb-2">Email: support@aeroflex.com</li>
-              <li className="mb-2">Address: 123 Flight Street, SkyCity, CA</li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Social Media Links */}
-        <div className="mt-6 border-t border-gray-700 pt-6 text-center">
-          <h2 className="text-lg font-semibold mb-4">Follow Us</h2>
-          <div className="flex justify-center space-x-6">
+      <div className="border-gray-700">
+          <h2 className="text-xl font-bold mb-4">Follow Us</h2>
+          <div className="flex  space-x-6">
             <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer">
               <svg className="w-6 h-6 text-white hover:text-blue-500" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M22.675 0h-21.35C.597 0 0 .597 0 1.325v21.351C0 23.403.597 24 1.325 24h11.494V14.709h-3.146v-3.62h3.146V8.338c0-3.116 1.9-4.813 4.677-4.813 1.328 0 2.468.099 2.799.143v3.243h-1.922c-1.504 0-1.796.715-1.796 1.763v2.309h3.592l-.468 3.62h-3.124V24h6.129c.728 0 1.325-.597 1.325-1.324V1.325C24 .597 23.403 0 22.675 0z"/>
@@ -57,12 +49,56 @@ const Footer = () => {
             </a>
           </div>
         </div>
+        {/* Contact Info */}
+        <div className="w-full  mb-6">
+            <h2 className="text-lg font-semibold mb-4">Contact Us</h2>
+            <ul className="text-sm">
+            <li className="mb-2">
+  Phone: <a href="tel:+1234567890" className=" hover:underline">+1 234 567 890</a>
+</li>
+<li className="mb-2">
+  Email: <a href="mailto:support@aeroflex.com" className=" hover:underline">support@aeroflex.com</a>
+</li>
+              <li className="mb-2">Address: 118, Flight Street, Skycity, Erode</li>
+            </ul>
+          </div>
 
-        {/* Copyright */}
-        
-      </div>
+
+     {/* Social Media Links */}
+     
+
+      {/* <div class="space-y-4">
+        <h4 class="text-lg font-semibold">CONTACT</h4>
+        <p class="hover:text-blue-400 cursor-pointer">Support</p>
+        <p class="hover:text-blue-400 cursor-pointer">Media</p>
+        <p class="hover:text-blue-400 cursor-pointer">Socials</p>
+      </div> */}
+    </div>
+  </div>
+
+  {/* <div class="container mx-auto py-6 border-t border-gray-700 flex justify-center items-center">
+    <div class="flex space-x-4">
+      <span class="text-gray-400 hover:text-blue-400 cursor-pointer">
+        <i class="ri-facebook-fill"></i>
+      </span>
+      <span class="text-gray-400 hover:text-blue-400 cursor-pointer">
+        <i class="ri-twitter-fill"></i>
+      </span>
+      <span class="text-gray-400 hover:text-blue-400 cursor-pointer">
+        <i class="ri-instagram-line"></i>
+      </span>
+      <span class="text-gray-400 hover:text-blue-400 cursor-pointer">
+        <i class="ri-youtube-fill"></i>
+      </span>
+    </div>
+  </div> */}
+</div>
+<div className="text-sm pb-2">
+         &copy; {new Date().getFullYear()} AeroFlex. All Rights Reserved.
+        </div>
+
     </footer>
   );
 };
 
-export default Footer;
+export default FooterInfo;

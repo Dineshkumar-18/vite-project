@@ -25,6 +25,11 @@ import AirlineDetails from './components/FlightOwner/Airline/AirlineDetails'
 import FlightDetails from './components/FlightOwner/Flights/FlightDetails'
 import ScheduleFlights from './components/FlightOwner/Flights/ScheduleFlights'
 import { FlightProvider } from './context/FlightContext'
+import UserLogin from './components/UserLogin'
+import UserRegister from './components/UserRegister'
+import PaymentForm from './components/PaymentForm'
+import FooterInfo from './components/FooterInfo'
+import AuthContainer from './components/AuthContainer'
 
 
 
@@ -40,7 +45,7 @@ const ConditionalLayout = ({ children }) => {
         <div className={isFlightOwnerRoute ? '' : 'min-h-screen'}>
           {children}
         </div>
-        {!isFlightOwnerRoute && <Footer />}
+        {!isFlightOwnerRoute && <FooterInfo />}
       </div>
     </div>
   );
@@ -68,7 +73,7 @@ const App = () => {
     // Close the modal before navigating
     setIsModalOpen(false);
     if (userType === 'user') {
-      navigate('/login'); // Redirect to normal user login
+      navigate('/auth?type=login'); // Redirect to normal user login
     } else if (userType === 'flightOwner') {
       navigate('/flight-owner/login'); // Redirect to flight owner login
     }
@@ -107,9 +112,10 @@ const App = () => {
         <Routes>
   
           <Route path="/" element={<SearchFlights />} />
-          <Route path='/login' element={<Login />} />
+          <Route path="/auth" element={<AuthContainer/>}/>
           <Route path="/flights/results" element={<FlightResults />}/>
           <Route path='/flights/booking/:id' element={<Booking/>}/>
+          <Route path='/payment' element={<PaymentForm/>}/>
 
 
 

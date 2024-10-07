@@ -49,18 +49,18 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
             {isSidebarOpen && <span className="ml-3">Flight Management</span>}
           </Link>
         </li>
-        <li>
+        {/* <li>
           <Link to="#" className="flex items-center p-3 hover:bg-blue-500 rounded-lg">
             <i className='bx bxs-calendar mr-3'></i>
             {isSidebarOpen && <span className="ml-3">Scheduled Flights</span>}
           </Link>
-        </li>
-        <li>
+        </li> */}
+        {/* <li>
           <Link href="#" className="flex items-center p-3 hover:bg-blue-500 rounded-lg">
             <i className='bx bxs-calendar mr-3'></i>
             {isSidebarOpen && <span className="ml-3">Payment History</span>}
           </Link>
-        </li>
+        </li> */}
         <li>
           <Link href="#" className="flex items-center p-3 hover:bg-blue-500 rounded-lg">
             <i className='bx bxs-user mr-3'></i>

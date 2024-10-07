@@ -101,7 +101,7 @@ const ETicket = ({ticketInfo}) => {
         <div>
         <div className="flex flex-col">
               <div className="text-2xl font-semibold">Total Price:</div>
-              <div className="text-3xl font-bold mt-2"><span className="text-3xl">$</span>{ticketPrice}</div>
+              <div className="text-3xl font-bold mt-2"><span className="text-3xl">₹</span>{ticketPrice}</div>
         </div>
         </div>
       </div>

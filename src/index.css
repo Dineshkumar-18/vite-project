@@ -1,8 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,700;1,400&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Roboto:ital,wght@0,400;0,700;1,400&display=swap');
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+
+
 
 
 /* Add this to hide the scrollbar */
@@ -24,8 +30,30 @@
 .fs-2 {
   font-size: 12px;
   line-height: 16px;
+
+  
+
 }
+
+
+
 }
+
+
+/* Custom slick-dots styling in your global CSS */
+.slick-dots li button:before {
+  color: white;  /* Make the dots white */
+  opacity: 0.5;  /* Slight transparency for inactive dots */
+}
+
+.slick-dots li.slick-active button:before {
+  color: white;  /* Solid white color for active dot */
+  opacity: 1;    /* Full opacity for the active dot */
+}
+  
+
+
+  
   
 
 

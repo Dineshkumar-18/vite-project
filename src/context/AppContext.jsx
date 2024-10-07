@@ -1,4 +1,4 @@
-import { createContext, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 
 export const AppContext=createContext()
 
@@ -6,6 +6,10 @@ export const AppProvider=({children})=>
 {
     const [fromLocation,setFromLocation]=useState("")
     const [toLocation,setToLocation]=useState("")
+    const [isLoggedIn, setIsLoggedIn] = useState(() => {
+      const storedIsLoggedIn = localStorage.getItem('isLoggedIn');
+      return storedIsLoggedIn === 'true'; // localStorage returns strings, so check for the string 'true'
+    });
 
     const [tripType,setTripType]=useState("Oneway-trip")
     const [passengers, setPassengers] = useState({
@@ -16,6 +20,11 @@ export const AppProvider=({children})=>
    const [Class,setClass]=useState("Economy")
    const [departureDate,setDepartureDate]=useState("")
    const [returnDate,setReturnDate]=useState("")
+
+
+   useEffect(() => {
+    localStorage.setItem('isLoggedIn', isLoggedIn.toString());
+  }, [isLoggedIn]);
 
     const value = {
         fromLocation,
@@ -31,7 +40,9 @@ export const AppProvider=({children})=>
         returnDate,
         setReturnDate,
         Class,
-        setClass
+        setClass,
+        isLoggedIn,
+        setIsLoggedIn
       };
  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

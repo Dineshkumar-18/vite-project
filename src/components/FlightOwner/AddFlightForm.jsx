@@ -805,7 +805,7 @@ const handleChangeSeatCount=(e)=>
             <p className='text-lg'>{isEditing ? 'Flight Layout updated successfully': 'Flight Added Successfully'}</p>
           </div>
         </div>)}
-   
+  
     <div className="flex">  
       {/* Main Content */}
       <div className="p-3 w-full">
