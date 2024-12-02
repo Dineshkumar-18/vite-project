@@ -40,7 +40,7 @@ const ETicket = ({ticketInfo}) => {
   const boardingTime = adjustTime(departureTime, 2);
   const ticketUrl = `https://yourdomain.com/verify-ticket/${ticketId}`;
   return (
-  <div className="w-3/4 bg-white border border-blue-400 rounded-3xl shadow-lg overflow-hidden ticket" id="">
+  <div className="w-3/4 bg-white border border-blue-400 rounded-3xl shadow-lg overflow-hidden ticket"  id="" >
  
   <div className="bg-blue-500 p-4 flex justify-between items-center">
     <div className="flex w-3/4 gap-10">

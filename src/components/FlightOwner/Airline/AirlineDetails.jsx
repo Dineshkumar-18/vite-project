@@ -75,33 +75,58 @@ const AirlineDetails = () => {
     <div className="container mx-auto p-6 lg:p-12">
       {/* Airline Overview Section */}
       <div className="bg-white shadow-xl rounded-lg p-8 mb-8 border-2 border-customColor">
-        <div className="flex items-center space-x-6 mb-6">
-          {isEditing ? (
-            <>
-              <input type="file" accept='image/*' onChange={handleLogoChange} />
-              {logoPreview && <img src={logoPreview} alt="Airline Logo" className="w-24 h-24 object-cover rounded-full shadow-md" />}
-            </>
-          ) : (
-            <img src={logoPreview} alt="Airline Logo" className="w-24 h-24 object-cover rounded-full shadow-md" />
+      <div className="bg-white shadow-xl rounded-lg p-8 mb-8 border-2 border-customColor">
+  <div className="flex items-center space-x-6 mb-6">
+    <div className="relative">
+      {/* Hidden file input for selecting the image */}
+      {isEditing && (
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleLogoChange}
+          className="absolute inset-0 opacity-0 cursor-pointer"
+        />
+      )}
+
+      {/* Profile Circle with Camera Icon */}
+      {logoPreview ? (
+        <img
+          src={logoPreview}
+          alt="Airline Logo"
+          className="w-24 h-24 object-cover rounded-full shadow-md"
+        />
+      ) : (
+        <div className="w-24 h-24 bg-gray-200 flex items-center justify-center rounded-full shadow-md">
+          {isEditing && (
+            <i className="fa-solid fa-camera  text-2xl cursor-pointer z-50" />
           )}
-          <div>
-            {isEditing ? (
-              <input
-                type="text"
-                name="AirlineName"
-                value={airline.airlineName}
-                onChange={handleInputChange}
-                className="text-4xl font-bold text-gray-800"
-              />
-            ) : (
-              <h2 className="text-4xl font-bold text-gray-800">{airline.airlineName}</h2>
-            )}
-            <p className="text-gray-500">Founded in {airline.foundedYear}</p>
-          </div>
-          <button onClick={handleEditClick} className="ml-auto bg-blue-500 text-white px-6 py-2 rounded">
-            {isEditing ? 'Cancel' : <div className='flex gap-2 items-center text-lg'><i class="fa-solid fa-pen-to-square"></i><h1>Edit</h1></div>}
-          </button>
         </div>
+      )}
+    </div>
+
+    <div>
+      {/* Airline Name Input/Display */}
+      {isEditing ? (
+        <input
+          type="text"
+          name="AirlineName"
+          value={airline.airlineName}
+          onChange={handleInputChange}
+          className="text-4xl font-bold text-gray-800"
+        />
+      ) : (
+        <h2 className="text-4xl font-bold text-gray-800">{airline.airlineName}</h2>
+      )}
+      <p className="text-gray-500">Founded in {airline.foundedYear}</p>
+    </div>
+
+    {/* Edit Button */}
+    <button onClick={handleEditClick} className="ml-auto bg-blue-500 text-white px-6 py-2 rounded">
+      {isEditing ? 'Cancel' : <div className="flex gap-2 items-center text-lg"><i className="fa-solid fa-pen-to-square"></i><h1>Edit</h1></div>}
+    </button>
+  </div>
+</div>
+
 
         {isEditing && (
           <button onClick={handleSubmit} className="mb-4 bg-green-500 text-white px-6 py-3 rounded">

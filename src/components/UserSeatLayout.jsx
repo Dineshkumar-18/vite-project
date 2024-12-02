@@ -41,9 +41,10 @@ const convertSeatTypetoArray=(seatTypeString)=>
     
 
 
-const UserSeatLayout = ({layout,TotalColumns,classnames,rowCount,setSeatCount,disabledSeats,setDisabledSeats,role,isBookingStarted,isPriceSetup,pricing,handleBatchUpdatePrices,seatPrice, onSeatSelect,markedSeats}) => {
+const UserSeatLayout = ({layout,TotalColumns,classnames,rowCount,setSeatCount,disabledSeats,setDisabledSeats,role,isBookingStarted,isPriceSetup,pricing,handleBatchUpdatePrices,seatPrice, onSeatSelect,markedSeats,startRow}) => {
 
   console.log(pricing)
+  console.log(startRow)
   
   
   const [selectedSeat, setSelectedSeat] = useState(null);
@@ -222,8 +223,9 @@ const handleSubmitSeatPrices = () => {
 
 
 
+   console.log(startRow)
 
-  let rowNumber=1;
+  let rowNumber=startRow;
 
   return (
     <div className='space-y-3'>

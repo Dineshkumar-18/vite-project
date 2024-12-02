@@ -4,10 +4,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useFlightOwner } from './FlightOwnerContext';
 import axiosInstance from '../../utils/axiosInstance';
 import { useSession } from '../../context/SessionContext';
+import { AuthContext } from '../../context/AuthContext';
 
 const Login = () => {
   const [flightOwnerId, setFlightOwnerId] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const {isLoggedIn, setIsLoggedIn} = useContext(AuthContext);
   const [isProfileCompleted, setIsProfileCompleted] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
   const [error, setError] = useState('');
@@ -43,11 +44,11 @@ const Login = () => {
 
   const fetchFlightOwnerDetails = async () => {
     try {
-      const response = await axiosInstance.get('/FlightOwners/get-flightowner-details');
+            const response = await axiosInstance.get('/FlightOwners/get-flightowner-details');
 
       const { flightOwnerId } = response.data;
       setFlightOwnerId(flightOwnerId);
-      
+
 
       const profileResponse = await axiosInstance.get(`/FlightOwners/${flightOwnerId}`);
       console.log(profileResponse.data)

@@ -3,10 +3,11 @@ import { AppContext } from '../context/AppContext';
 import { useSession } from '../context/SessionContext';
 import axiosInstance from '../utils/axiosInstance';
 import { Link } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 
-const UserLogin = ({ onClose,onSwitchToRegister,setShowSuccess }) => {
+const UserLogin = ({ onClose,onSwitchToRegister,setShowSuccess,onLoginSuccess }) => {
   const [userId, setUserId] = useState(null);
-  const { setIsLoggedIn } = useContext(AppContext);
+  const { setIsLoggedIn } = useContext(AuthContext);
   const [error, setError] = useState('');
   const [login, setLogin] = useState({ email: '', password: '' });
   const [view, setView] = useState(false);
@@ -28,7 +29,8 @@ const UserLogin = ({ onClose,onSwitchToRegister,setShowSuccess }) => {
         setIsLoggedIn(true);
         setShowSuccess(true)
         setTimeout(() => {
-          setShowSuccess(false); // Hide success message
+          setShowSuccess(false);
+          onLoginSuccess() // Hide success message
           onClose(); // Close modal after the success message is hidden
       }, 3000); // 3000 milliseconds = 3 seconds
 

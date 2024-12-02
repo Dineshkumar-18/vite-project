@@ -3,6 +3,7 @@ import { FaPlaneDeparture, FaPlaneArrival, FaClock, FaCalendarAlt, FaUserTie, Fa
 import { useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../../../utils/axiosInstance';
 import SeatAllocation from '../../SeatAllocation';
+import FlightScheduleTable from './FlightScheduleTable';
 
 const FlightDetails = () => {
      
@@ -185,6 +186,9 @@ const FlightDetails = () => {
               <button className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-300" onClick={()=>{setLayoutOpen(prev=>!prev);navigate(`/flight-owner/flight/schedule/${id}`)}}>
                 Schedule Flight
               </button>
+              <button className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-300" onClick={()=>{setLayoutOpen(prev=>!prev);navigate(`/flight-owner/flight/schedule/${id}`)}}>
+                Recent Flight Schedule Details
+              </button>
             </div>
 
           </div>
@@ -192,6 +196,8 @@ const FlightDetails = () => {
         {layoutOpen && 
             <SeatAllocation layout={seatLayoutInfo[0].layoutPattern} TotalColumns={seatLayoutInfo[0].totalColumns} setSeatCount={() => {}} disabledSeats={disabledSeats} setDisabledSeats={setDisabledSeats} classnames={classnames} rowCount={rowCount} role="flightOwner" isBookingStarted={false}/>
         }
+        <FlightScheduleTable/>
+        
         </div>
       );    
 };

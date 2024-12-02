@@ -1,9 +1,9 @@
 import React, { useState, useContext } from 'react';
-import { AppContext } from '../context/AppContext';
 import UserLogin from './UserLogin'; // Assuming UserLogin is in the same directory
+import { AuthContext } from '../context/AuthContext';
 
 const LoginButton = () => {
-  const { isLoggedIn } = useContext(AppContext);
+  const { isLoggedIn } = useContext(AuthContext);
   const [showLoginModal, setShowLoginModal] = useState(false);
 
   const handleLoginClick = () => {

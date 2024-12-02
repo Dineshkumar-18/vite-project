@@ -7,7 +7,7 @@ import SearchFlights from './SearchFlights';
 
 const FlightResults = () => {
   const location = useLocation();
-  const { flightData } = location.state || {};
+  const { flightData,userInputData } = location.state || {};
 
   console.log(flightData.outboundFlights)
 
@@ -23,7 +23,7 @@ const FlightResults = () => {
         {/* Main content area for flight schedule */}
         <main className="col-span-6">
           <ScrollableDateRange />
-          <FlightTable flightData={flightData}/>
+          <FlightTable flightData={flightData} userInputData={userInputData}/>
         </main>
       </div>
     </div>

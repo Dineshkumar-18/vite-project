@@ -39,19 +39,7 @@ const FlightSearchForm = ({setIsSearched}) => {
       bgColor: '#32CD32',
       altText: 'Special Offer',
       text: 'Exclusive Deal! Book a Round-Trip Flight and Get a Free Upgrade to Business Class!'
-    },
-    {
-      imgSrc: 'https://via.placeholder.com/150x100.png?text=Save+Big',
-      bgColor: '#FF69B4',
-      altText: 'Save Big',
-      text: 'Hurry! Book Your Flight Within the Next 24 Hours and Get 20% Off!'
-    },
-    {
-      imgSrc: 'https://via.placeholder.com/150x100.png?text=Adventure+Awaits',
-      bgColor: '#FFD700',
-      altText: 'Adventure Awaits',
-      text: 'Explore New Horizons! Book a Flight to Your Dream Destination Today!'
-    },
+    }
   ], []);  // Empty array ensures the items are only created once
 
   useEffect(() => {
@@ -142,7 +130,7 @@ const FlightSearchForm = ({setIsSearched}) => {
         setIsSearched(true)
         setProgress(100);
         // Navigate to the results page and pass data as state
-        navigate('/flights/results', { state: { flightData: response.data} });
+        navigate('/flights/results', { state: { flightData: response.data,userInputData:payload} });
         console.log("waiting time")
     
     } catch (error) {

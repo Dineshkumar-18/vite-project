@@ -6,11 +6,12 @@ import AuthContainer from './AuthContainer'
 import LogoutConfirmation from './FlightOwner/LogoutConfirmation'
 import axiosInstance from '../utils/axiosInstance'
 import UserMenu from './UserMenu'
+import { AuthContext } from '../context/AuthContext'
 
 const NavBar = () => {
 
   const navigate=useNavigate()
-  const {isLoggedIn,setIsLoggedIn}=useContext(AppContext)
+  const {isLoggedIn,setIsLoggedIn}=useContext(AuthContext)
    const[profileOpen,setProfileOpen]=useState(false)
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
   const dropdownRef = useRef(null);
@@ -19,15 +20,6 @@ const NavBar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [authType, setAuthType] = useState('login'); // Default to login
 
-    const openLogin = () => {
-        setAuthType('login');
-        setIsOpen(true);
-    };
-
-    const openRegister = () => {
-        setAuthType('register');
-        setIsOpen(true);
-    };
 
     const handleOpenAuth = (type) => {
       setAuthType(type);
@@ -50,7 +42,8 @@ const NavBar = () => {
     axiosInstance.post('/Account/logout', {})
       .then(response => {
         setIsLoggedIn(false);
-        localStorage.removeItem('isLoggedIn');
+        localStorage.setItem('isLoggedIn', 'false');
+        localStorage.setItem('userType','user');
         setShowLogoutConfirmation(false)
         navigate('/');
       })
@@ -98,17 +91,7 @@ const NavBar = () => {
               <div className='flex items-center gap-3 text-white cursor-pointer' onClick={(e)=>handleProfile(e)} ref={dropdownRef}> 
                 <i className="fa-regular fa-user "></i>
                 <span>My Account</span>
-                {profileOpen && 
-    //   <div className='absolute right-24 bg-secondary top-20 w-52 rounded-md h-max z-50 shadow-lg p-4 flex flex-col gap-3' > 
-    //     <div className='flex items-center gap-3 hover:bg-blue-500 hover:text-white rounded-lg p-2' onClick={()=>navigate('/')}>
-    //      <i class="fas fa-user-edit"></i>
-    //      <span className="text-md font-semibold">Manage Profile</span>
-    //     </div>
-    //     <div className='flex items-center gap-4 p-2 hover:bg-blue-500 rounded-lg hover:text-white' onClick={() => setShowLogoutConfirmation(true)}>
-    //        <i class="fa-solid fa-right-from-bracket"></i>
-    //       <button className='font-semibold'>Logout</button>
-    //     </div>
-    //  </div>     
+                {profileOpen &&   
     
       <UserMenu navigate={navigate} setShowLogoutConfirmation={setShowLogoutConfirmation}/>
     }
@@ -119,6 +102,7 @@ const NavBar = () => {
                 onClose={() => setIsOpen(false)} 
                 authType={authType} 
                 onSwitchAuth={(type) => setAuthType(type)} 
+                onLoginSuccess={()=>{}}
             />
         </div>
      </div>

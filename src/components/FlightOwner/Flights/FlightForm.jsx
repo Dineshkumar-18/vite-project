@@ -9,13 +9,15 @@ import AddFlightForm from "../AddFlightForm";
 import axios from "axios";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 
-const FlightForm = () => {
+const FlightForm = ({isNewSchedule ,fsId}) => {
   // State to handle form progress
   const [step, setStep] = useState(1);
 
   const {flightData}=useFlightContext()
 
   const [layout,setLayout]=useState([])
+
+ console.log(isNewSchedule,fsId)
 
   console.log(flightData)
   const {id}=useParams()
@@ -32,7 +34,7 @@ const FlightForm = () => {
 
  const [flightPricing,setFlightPricing]=useState(
   {
-     basePrice: 0,
+    basePrice: 0,
     seasonalMultiplier: 1,
     demandMultiplier: 1,
     discount: 0,
@@ -43,11 +45,16 @@ const FlightForm = () => {
   const [fromLocation,setFromLocation]=useState(0)
   const [toLocation,setToLocation]=useState(0)
   const [error,setError]=useState('')
-  const [flightScheduleId,setFlightScheduleId]=useState(0)
+  const [flightScheduleId,setFlightScheduleId]=useState(!isNewSchedule ? parseInt(fsId)  : 0)
+
+
   const [openEditForm,setOpenEditForm]=useState(false)
   const [classPricing, setClassPricing] = useState({});
   const [showSuccess,setShowSuccess]=useState(false)
+ 
   const componentRef = useRef(null);
+
+  const [ProgressId,setProgressId]=useState(0)
 
   const [classWithBasePrice,setClassWithBasePrice]=useState([]) 
 
@@ -83,6 +90,45 @@ const FlightForm = () => {
     }));
   };
 
+  useEffect(() => {
+    const fetchProgress = async () => {
+        try {
+            const response = await axiosInstance.get(`/FlightSchedule/get-progress/${flightScheduleId}`);
+            if (response.data) {
+                const { step, isSaved,progressId } = response.data;
+                setStep(step || 1);
+                setIsSaved(isSaved ? JSON.parse(isSaved) : { step1: false, step2: false, step3: false, step4: false }); // Parse string to object
+                setProgressId(progressId)
+            }
+        } catch (error) {
+            console.error('Error fetching progress:', error);
+        }
+    };
+
+    if(!isNewSchedule)
+    {
+      fetchProgress();
+    }
+}, [id]);
+
+
+const saveProgress = async (currentStep, savedStatus,fscheduleId) => {
+  try {
+      const response=await axiosInstance.post(`/FlightSchedule/save-progress`, {
+          progressId: ProgressId,
+          flightId: id,
+          step: currentStep,
+          isSaved: JSON.stringify(savedStatus),
+          flightScheduleId : fscheduleId
+   });
+
+      const {progressId } = response.data;
+      setProgressId(progressId)
+      console.log(response.data);
+  } catch (error) {
+      console.error('Error saving progress:', error);
+  }
+};
 
 
   console.log(classPricing)
@@ -164,9 +210,9 @@ console.log(flightPricing)
                   if(!isSaved.step1){
 
                     const ModifiedflightScheduleData = {
-                      ...flightScheduleData, // Spread existing properties
-                      arrivalTime: formatDateToUTC(flightScheduleData.arrivalTime), // Format arrival time
-                      departureTime: formatDateToUTC(flightScheduleData.departureTime) // Format departure time
+                      ...flightScheduleData,
+                      departureAirportId:fromLocation,
+                      arrivalAirportId:toLocation
                   };
                   console.log(ModifiedflightScheduleData)
                     
@@ -175,6 +221,7 @@ console.log(flightPricing)
                     setFlightScheduleId(parseInt(apiResponse.message))
                     setIsSaved((prev) => ({ ...prev, step1: true }));
                     setStep(2)
+                    saveProgress(2, {...isSaved,step1:true},parseInt(apiResponse.message));
                     console.log("inside step 2")
                   }
                   else
@@ -191,6 +238,7 @@ console.log(flightPricing)
                     console.log(apiResponse);
                     setIsSaved((prev) => ({ ...prev, step2: true }));
                     setStep(3)
+                    saveProgress(3, {...isSaved,step2:true});
                   }
                   else
                   {
@@ -217,6 +265,7 @@ console.log(flightPricing)
                     const seatAdd=await saveModel(`/Flight/add-seat-pricing/${flightScheduleId}`,{classNames:seatCreation});
                     console.log(seatAdd)
                     setIsSaved((prev) => ({ ...prev, step3: true }));
+                    saveProgress(4, {...isSaved, step3:true},flightScheduleId);
                 }
                 setStep(4);
                 break;
@@ -236,7 +285,7 @@ console.log(flightPricing)
                    componentRef.current?.scrollIntoView({ behavior: 'smooth' });
                    setShowSuccess(true);
                    setTimeout(() => setShowSuccess(false), 3000);
-               
+                   saveProgress(5, {...isSaved, step4:true},flightScheduleId);
                   break;
             default:
                 break;
@@ -252,14 +301,19 @@ console.log(flightScheduleId)
 
 
 function formatDateToUTC(dateString) {
-  // Create a new Date object
+  // Parse the date string into components
   const date = new Date(dateString);
 
-  // Get the UTC time
-  const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
-  
-  // Return the formatted string in the required format
-  return utcDate.toISOString(); // This will give you the format "2024-10-03T11:19:55.525Z"
+  // Return the UTC date directly as an ISO string
+  return new Date(Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+    date.getUTCHours(),
+    date.getUTCMinutes(),
+    date.getUTCSeconds(),
+    date.getUTCMilliseconds()
+  )).toISOString();
 }
 
       
@@ -294,8 +348,6 @@ useEffect(()=>
     totalSeats: flightData.totalSeats
   }))
 },[flightData])
- 
-
 
 
 const handleSubmit=(e)=>
@@ -377,6 +429,8 @@ const handleSubmit=(e)=>
     }));
   };
   
+  console.log(fromLocation,toLocation);
+  console.log(flightScheduleData);
   
 
   
@@ -424,7 +478,7 @@ const handleSubmit=(e)=>
         </div>
       </div>
 
-      {/* Step Form */}
+      {/* Step Form */} 
       <div className="bg-white p-6 rounded-lg shadow-md">
         {step === 1 && (
           <div>

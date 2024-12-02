@@ -49,6 +49,7 @@ const PaymentForm = () => {
 
          setPaymentSucess(true)
 
+        
 
         // Here, you would typically send paymentData to your backend or payment processing service
         
@@ -59,7 +60,7 @@ const PaymentForm = () => {
 
     return (
        
-        <div className="flex items-center justify-center h-screen bg-blue-900">
+        <div className="flex items-center justify-center h-screen">
 
             { paymentSuccess ? <TicketGenerator paymentId={paymentId}/> :
            ( <div className="max-w-sm w-full bg-white p-6 rounded-lg shadow-lg">

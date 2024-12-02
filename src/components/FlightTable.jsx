@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import FlightSchedule from './FlightSchedule';
 
-const FlightTable = ({ flightData}) => {
+const FlightTable = ({ flightData,userInputData}) => {
   const [sortConfig, setSortConfig] = useState({ column: null, direction: null });
 
   const handleSort = (column) => {
@@ -67,7 +67,7 @@ const FlightTable = ({ flightData}) => {
 
       {/* Flight Rows */}
       {flightData.outboundFlights.map((flight, index) => (
-        <FlightSchedule key={flight.flightScheduleId} flightDetails={flight}/>
+        <FlightSchedule key={flight.flightScheduleId} flightDetails={flight} userInputData={userInputData}/>
       ))}
     </div>
   );

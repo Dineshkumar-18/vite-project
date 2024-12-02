@@ -10,10 +10,14 @@ import SeatAllocation from '../components/SeatAllocation'
 import axiosInstance from '../utils/axiosInstance'
 import UserSeatLayout from '../components/UserSeatLayout'
 import { AppContext } from '../context/AppContext'
+import { AuthContext } from '../context/AuthContext'
+import AuthContainer from '../components/AuthContainer'
 
 const Booking = () => {
     const location =useLocation()
     const flightDetails=location.state?.bookingDetails
+    const userInputData=location.state?.userInputData
+    const {isLoggedIn}=useContext(AuthContext)
 
     const {passengers}=useContext(AppContext)
     
@@ -32,11 +36,17 @@ const Booking = () => {
         'first-row-count': 0,
         'premium-row-count': 0,
     });
+    const [startingRowNumber, setStartingRowNumber] = useState(1);
     const [seats, setSeats] = useState([]);
     const navigate=useNavigate()
 
     const [click,setClick]=useState(false)
     const [seatAllocations, setSeatAllocations] = useState({});
+    const [isOpen, setIsOpen] = useState(false);
+    const [authType, setAuthType] = useState('login'); // Default to login
+    const [pendingSubmission, setPendingSubmission] = useState(false);
+
+
 
     console.log(passengers)
 
@@ -57,7 +67,7 @@ const Booking = () => {
   };
 
   const handleDateChange = (seatNumber, date) => {
-    setSeatAllocations(prevState => ({
+    setSeatAllocations(prevState => ({  
         ...prevState,
         [seatNumber]: {
             ...prevState[seatNumber],
@@ -66,35 +76,39 @@ const Booking = () => {
     }));
 };
 
+ console.log(isLoggedIn)
+ console.log(seatAllocations)
+
 
 const handleSubmit = async (e) => {
   e.preventDefault();
+  if (!isLoggedIn) {
+    setAuthType('login');  // Set default to login
+    setIsOpen(true); 
+    setPendingSubmission(true);
+    return;      // Open the AuthContainer modal
+  }
 
-  
-  // if (!isLoggedIn) {
-  //     alert('Please log in or register.');
-  //     return; // or handle redirection to login page
-  // }
-
-  // Prepare the booking data
   const bookingData = { seatAllocations };
   console.log(bookingData)
 
   // API Call
-  try {
-      const response = await axiosInstance.post(`/Booking/createbooking/${id}`, bookingData);
+            try {
+                const response = await axiosInstance.post(`/Booking/createbooking/${id}`, bookingData);
 
-      console.log(response.data)
+                console.log(response.data)
 
-      // Navigate to payment page on successful booking
-      navigate('/payment', {
-        state: { bookingId: parseInt(response.data.message), price: totalPrice }
-    });
-// Adjust the path as necessary
+                // Navigate to payment page on successful booking
+                navigate('/payment', {
+                    state: { bookingId: parseInt(response.data.message), price: totalPrice }
+                });
+            // Adjust the path as necessary
 
-  } catch (error) {
-      console.error('Error:', error);
-  }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+
+          console.log('Form submitted successfully after login!');
 };
 
 
@@ -219,9 +233,39 @@ const handleSubmit = async (e) => {
         });
 
         const orderedClassNames = ['first', 'business', 'premium', 'economy'].filter(name => classNamesSet.has(name));
+        
+        const userClass = userInputData.class.toLowerCase();
+          
+        console.log(orderedClassNames,userClass)
+
+        let calculatedStartingRowNumber = 1;
+
+        for (const className of orderedClassNames) {
+            const rowCountKey = `${className}-row-count`;
+            console.log(rowCountKey);
+            console.log(className, userClass);
+
+            // Add row count of the class only if it's before the userClass
+            if (className !== userClass) {
+                calculatedStartingRowNumber += updatedRowCount[rowCountKey];
+                console.log(calculatedStartingRowNumber);
+            } else {
+                // Stop the loop when we reach the userClass
+                break;
+            }
+        }
+
+        console.log(`Starting row number for ${userClass}: ${startingRowNumber}`);
+        
+        console.log(updatedRowCount)
+// Ensure the class from userInputData is added to the orderedClassNames list
+   const finalClassNames = orderedClassNames.includes(userClass)
+  ? [userClass]  // Only include the userInputData.class
+  : [];   
         // Update state with the final values
         setRowCount(updatedRowCount);
-        setClassnames(orderedClassNames);
+        setClassnames(finalClassNames);
+        setStartingRowNumber(calculatedStartingRowNumber);
     }
 }, [seatLayoutInfo]);
 
@@ -267,7 +311,47 @@ if (loading || !flight.departureAirport || !flight.arrivalAirport) {
         // Format the date
         return date.toLocaleDateString('en-GB', options); 
       }
+
+      console.log(startingRowNumber)
+
+      const handleLoginSuccess = async() => {
+        // If there's a pending form submission, continue it
+        if (pendingSubmission) {
+          
+            const bookingData = { seatAllocations };
+            console.log(bookingData)
+
+  // API Call
+            try {
+                const response = await axiosInstance.post(`/Booking/createbooking/${id}`, bookingData);
+
+                console.log(response.data)
+
+                // Navigate to payment page on successful booking
+                navigate('/payment', {
+                    state: { bookingId: parseInt(response.data.message), price: totalPrice }
+                });
+            // Adjust the path as necessary
+
+            } catch (error) {
+                console.error('Error:', error);
+            }
+
+          console.log('Form submitted successfully after login!');
+          setPendingSubmission(false);  // Reset pending submission
+        }
+      };
   return (
+        
+   <div>
+    <AuthContainer
+    isOpen={isOpen} 
+    onClose={() => setIsOpen(false)} 
+    authType={authType} 
+    onSwitchAuth={(type) => setAuthType(type)} 
+    onLoginSuccess={handleLoginSuccess} 
+/>
+
     <div className='grid grid-cols-5 gap-4'>
        <div className='col-span-4'>
          <div>
@@ -293,64 +377,103 @@ if (loading || !flight.departureAirport || !flight.arrivalAirport) {
       </div>
   </div>
   
-  <UserSeatLayout layout={seatLayoutInfo[0].layoutPattern} TotalColumns={seatLayoutInfo[0].totalColumns} setSeatCount={() => {}} disabledSeats={disabledSeats} setDisabledSeats={setDisabledSeats} classnames={classnames} rowCount={rowCount} role="user" isBookingStarted={false} seatPrice={seats} onSeatSelect={handleSeatSelect} markedSeats={selectedSeats}/>
+  <UserSeatLayout layout={seatLayoutInfo[0].layoutPattern} TotalColumns={seatLayoutInfo[0].totalColumns} setSeatCount={() => {}} disabledSeats={disabledSeats} setDisabledSeats={setDisabledSeats} classnames={classnames} rowCount={rowCount} role="user" isBookingStarted={false} seatPrice={seats} onSeatSelect={handleSeatSelect} markedSeats={selectedSeats}
+    startRow={startingRowNumber}/>
     
-
+{seatArray.length > 0 &&
   <form onSubmit={handleSubmit} className="container my-3 mx-auto p-6 border border-gray-300 rounded-lg bg-white shadow-md">
     {/* Dynamically render input fields based on selected seats */}
     {seatArray.map((seatNumber) => (
         <div key={seatNumber} className="mb-6">
-            <h4 className="text-lg font-semibold mb-2">Passenger Details for Seat {seatNumber}</h4>
-            <label className="block font-bold mt-2">
+            <h4 className="text-lg font-bold mb-2">Passenger Details for Seat {seatNumber}</h4>
+            <div>
+            <label className="block mt-2 font-semibold">
                 First Name:
-                <input 
+            </label>
+            <input 
                     type="text" 
+                    name='firstname'
                     onChange={(e) => handlePassengerInputChange(seatNumber, 'firstname', e.target.value)} 
                     className="mt-1 p-2 border border-gray-300 rounded w-full"
+                    value={seatAllocations[seatNumber]?.firstname || ""}
+                    required
                 />
-            </label>
-            <label className="block font-bold mt-2">
+            </div>
+            <div>
+            <label className="block mt-2 font-semibold">
                 Last Name:
-                <input 
+            </label>
+            <input 
                     type="text" 
+                    name='lastname'
                     onChange={(e) => handlePassengerInputChange(seatNumber, 'lastname', e.target.value)} 
                     className="mt-1 p-2 border border-gray-300 rounded w-full"
+                    value={seatAllocations[seatNumber]?.lastname || ""}
+                    required
                 />
-            </label>
-            <label className="block font-bold mt-2">
+            </div>
+            
+            <div>
+
+            
+            <label className="block mt-2 font-semibold">
                 Gender:
-                <input 
-                    type="text" 
-                    onChange={(e) => handlePassengerInputChange(seatNumber, 'gender', e.target.value)} 
-                    className="mt-1 p-2 border border-gray-300 rounded w-full"
-                />
             </label>
-            <label className="block font-bold mt-2">
+            <select
+                    onChange={(e) => handlePassengerInputChange(seatNumber, 'gender', e.target.value)}
+                    className="mt-1 p-2 border border-gray-300 rounded w-full"
+                    value={seatAllocations[seatNumber]?.gender}
+                    name='gender'
+                    required
+                >
+                    <option disabled selected value="">Choose Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Transgender">Transgender</option>
+                </select>
+                </div>
+            <div>
+            <label className="block mt-2 font-semibold">
                 Date of Birth:
-                <input 
+                
+            </label>
+            <input 
                     type="date" 
+                    name='dateOfBirth'
                     onChange={(e) => handlePassengerInputChange(seatNumber, 'dateOfBirth', e.target.value)} 
                     className="mt-1 p-2 border border-gray-300 rounded w-full"
+                    value={seatAllocations[seatNumber]?.dateOfBirth || ""}
+                    required
                 />
-            </label>
-            <label className="block font-bold mt-2">
+            </div>
+            
+            <div>
+
+            
+            <label className="block mt-2 font-semibold">
                 Passenger Type:
-                <select
+                
+            </label>
+            <select
                     onChange={(e) => handlePassengerInputChange(seatNumber, 'passengerType', e.target.value)}
                     className="mt-1 p-2 border border-gray-300 rounded w-full"
+                    value={seatAllocations[seatNumber]?.passengerType}
+                    name='passengerType'
+                    required
                 >
-                    <option value="1">Adult</option>
+                    <option disabled selected value="">Choose Passenger Type</option>
+                    <option value="3">Adult</option>
                     <option value="2">Child</option>
-                    <option value="3">Infant</option>
+                    <option value="1">Infant</option>
                 </select>
-            </label>
+            </div>
         </div>
     ))}
 
     <button type="submit" className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600 transition">
         Submit Booking
     </button>
-</form>
+</form>}
 
   
   
@@ -370,6 +493,7 @@ if (loading || !flight.departureAirport || !flight.arrivalAirport) {
          <h1 className='text-lg font-bold'></h1>
          </div> */}
         </div>
+    </div>
     </div>
   )
 }

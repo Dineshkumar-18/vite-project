@@ -31,11 +31,7 @@
   font-size: 12px;
   line-height: 16px;
 
-  
-
 }
-
-
 
 }
 
@@ -50,6 +46,8 @@
   color: white;  /* Solid white color for active dot */
   opacity: 1;    /* Full opacity for the active dot */
 }
+
+
   
 
 

@@ -137,82 +137,82 @@ const AirlineFlights = ({ airline }) => {
       </div>
       
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white table-auto border-collapse">
+        <table className="min-w-full bg-white table-auto border-collapse ">
           <thead>
             <tr className="bg-gray-100">
-              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700"onClick={() =>handleSort('flightNumber')}>Flight No.{sortedBy === 'flightNumber' && (
+              <th className="px-4 py-2 text-left text-lg font-semibold text-gray-700"onClick={() =>handleSort('flightNumber')}>Flight No.{sortedBy === 'flightNumber' && (
                   <span className="inline-block ml-3">
                     {sortedOrder === 'asc' ? <i class="fa-solid fa-arrow-up"></i> : <i class="fa-solid fa-arrow-down"></i>}
                   </span>
                 )}</th>
-              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700" onClick={() =>handleSort('departAirport')}>Departure Airport
+              <th className="px-4 py-2 text-left text-lg font-semibold text-gray-700" onClick={() =>handleSort('departAirport')}>Departure Airport
               {sortedBy === 'departAirport' && (
                   <span className="inline-block ml-3">
                     {sortedOrder === 'asc' ? <i class="fa-solid fa-arrow-up"></i> : <i class="fa-solid fa-arrow-down"></i>}
                   </span>
                 )}
               </th>
-              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700" onClick={()=>handleSort('departIataCode')}>Departure Iata Code
+              <th className="px-4 py-2 text-left text-lg font-semibold text-gray-700" onClick={()=>handleSort('departIataCode')}>Departure Iata Code
               {sortedBy === 'departIataCode' && (
                   <span className="inline-block ml-3">
                     {sortedOrder === 'asc' ? <i class="fa-solid fa-arrow-up"></i> : <i class="fa-solid fa-arrow-down"></i>}
                   </span>
                 )}
               </th>
-              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700" onClick={()=>handleSort('arrivalAirport')}>Arrival Airport
+              <th className="px-4 py-2 text-left text-lg font-semibold text-gray-700" onClick={()=>handleSort('arrivalAirport')}>Arrival Airport
               {sortedBy === 'arrivalAirport' && (
                   <span className="inline-block ml-3">
                     {sortedOrder === 'asc' ? <i class="fa-solid fa-arrow-up"></i> : <i class="fa-solid fa-arrow-down"></i>}
                   </span>
                 )}
               </th>
-              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700" onClick={()=>handleSort('arrivalIataCode')}>Arrival Iata Code
+              <th className="px-4 py-2 text-left text-lg font-semibold text-gray-700" onClick={()=>handleSort('arrivalIataCode')}>Arrival Iata Code
               {sortedBy === 'arrivalIataCode' && (
                   <span className="inline-block ml-3">
                     {sortedOrder === 'asc' ? <i class="fa-solid fa-arrow-up"></i> : <i class="fa-solid fa-arrow-down"></i>}
                   </span>
                 )}
               </th>
-              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700" onClick={()=>handleSort('flightType')}>Flight Type
+              <th className="px-4 py-2 text-left text-lg font-semibold text-gray-700" onClick={()=>handleSort('flightType')}>Flight Type
               {sortedBy === 'flightType' && (
                   <span className="inline-block ml-3">
                     {sortedOrder === 'asc' ? <i class="fa-solid fa-arrow-up"></i> : <i class="fa-solid fa-arrow-down"></i>}
                   </span>
                 )}
               </th>
-              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Status</th>
-              <th className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Actions</th>
+              <th className="px-4 py-2 text-left text-lg font-semibold text-gray-700">Status</th>
+              <th className="px-4 py-2 text-left text-lg font-semibold text-gray-700">Actions</th>
             </tr>
           </thead>
           <tbody>
            {sortedFlightsMemo.length > 0 ? (
               sortedFlightsMemo.map((flight, index) => (
               <tr key={flight.flightId} className="border-b hover:bg-gray-200">
-                <td className="px-4 py-2 text-sm text-gray-700">{flight.flightNumber}</td>
-                <td className="px-4 py-2 text-sm text-gray-700">
+                <td className="px-4 py-2 text-lg text-gray-700">{flight.flightNumber}</td>
+                <td className="px-4 py-2 text-lg text-gray-700">
                   <div className="flex items-center space-x-2">
                     <FaPlaneDeparture className="text-blue-500" />
                     <span>{flight.departAirport.airportName}-{flight.departAirport.city}</span>
                   </div>
                 </td>
-                <td className="px-4 py-2 text-sm text-gray-700">
+                <td className="px-4 py-2 text-lg text-gray-700">
                   <div className="flex items-center space-x-2">
                     <span>{flight.departAirport.iataCode}</span>
                   </div>
                 </td>
-                <td className="px-4 py-2 text-sm text-gray-700">
+                <td className="px-4 py-2 text-lg text-gray-700">
                   <div className="flex items-center space-x-2">
                     <FaPlaneArrival className="text-blue-500" />
                     <span>{flight.arrivalAirport.airportName} - {flight.arrivalAirport.city}</span>
                   </div>
                 </td>
-                <td className="px-4 py-2 text-sm text-gray-700">
+                <td className="px-4 py-2 text-lg text-gray-700">
                   <div className="flex items-center space-x-2">
                     <span>{flight.arrivalAirport.iataCode}</span>
                   </div>
                 </td>
                 
-                <td className="px-4 py-2 text-sm text-gray-700">
+                <td className="px-4 py-2 text-lg text-gray-700">
                   <div className="flex items-center space-x-2">
                     {
                       flight.flightType === 1 ?  <div className='flex items-center gap-2'><FaPlane className="text-blue-500"/> <span className='text-black'>Domestic</span> </div>
@@ -221,19 +221,19 @@ const AirlineFlights = ({ airline }) => {
                     }
                   </div>
                 </td>
-                <td className="px-4 py-2 text-sm text-gray-700">
+                <td className="px-4 py-2 text-lg text-gray-700">
                   <div className="flex items-center space-x-2">
                     <span className='bg-green-500 px-3 text-white rounded-lg'>{"Active"}</span>
                   </div>
                 </td>
-                <td className="px-4 py-2 text-sm">
+                <td className="px-4 py-2 text-lg">
                   <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" onClick={()=>navigate(`/flight-owner/flight/${flight.flightId}`)}>
                     View Flight Details
                   </button>
                 </td>
               </tr>
             ))):(<tr>
-              <td colSpan="8" className="text-center py-4 text-sm font-semibold text-gray-500">
+              <td colSpan="8" className="text-center py-4 text-lg font-semibold text-gray-500">
                 No flights match your search criteria.
               </td>
             </tr>

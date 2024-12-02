@@ -3,6 +3,7 @@ import { CheckCircleIcon, ExclamationCircleIcon, XCircleIcon } from '@heroicons/
 import axiosInstance from '../utils/axiosInstance';
 import { isEqual } from 'lodash';
 import PhoneNumberInput from './PhoneNumberInput';
+import { FaTimes, FaTrash } from 'react-icons/fa';
 
 
 const ManageUserProfile = () => {
@@ -28,6 +29,7 @@ const ManageUserProfile = () => {
   
   const [initialProfileData, setInitialProfileData] = useState({});
   const [initialAddressData, setInitialAddressData] = useState({});
+  const [showConfirmPopup, setShowConfirmPopup] = useState(false);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [isChanged, setIsChanged] = useState({ address: false, profile: false });
   const [userId, setUserId] = useState(0);
@@ -157,7 +159,7 @@ const ManageUserProfile = () => {
       });
   
       const logoUrl = response.data.fileUrl; // Assuming response contains the URL
-  
+      console.log(logoUrl);
       // Update profileData with the new image URL
       setProfileData((prev) => ({ ...prev, userProfile: logoUrl }));
     } catch (error) {
@@ -244,6 +246,28 @@ const ManageUserProfile = () => {
     }
   };
 
+  
+
+  const handleRemovePhoto = () => {
+    setShowConfirmPopup(true); // Show confirmation popup
+  };
+
+  const confirmRemovePhoto = async() => {
+    // Logic to remove the profile photo
+    const response=await axiosInstance.put(`/User/remove-profile-picture/${userId}`)
+    console.log(response.data)
+    setPhotoPreview(null);
+    setProfileData((prevData) => ({
+      ...prevData,
+      userProfile: null,
+    }));
+    setShowConfirmPopup(false); // Close the popup after removing
+  };
+
+  const cancelRemovePhoto = () => {
+    setShowConfirmPopup(false); // Close the popup without removing
+  };
+
   console.log(showAlert.message)
   return (
     <div className="w-3/4 mx-auto p-6 bg-white shadow-md rounded-lg" id='profile'>
@@ -271,36 +295,43 @@ const ManageUserProfile = () => {
       <form onSubmit={handleSubmit} className="space-y-5">
        
          {/* Profile Photo Upload */}
-        <div className='flex items-center gap-10'>
-          {photoPreview ? (
-            <img
-              src={photoPreview}
-              alt="Profile Preview"
-              className="w-36 h-36 object-cover rounded-full  border"
-            />
-          ) : (
-            // <div className="w-32 h-32 bg-gray-200 rounded-full mx-auto flex items-center justify-center border">
-            //   <span className="text-gray-500">No Image</span>
-            // </div>
-            <img
-              src={`${profileData.userProfile ? profileData.userProfile : '/empty-profile.png'}`}
-              alt="Profile Preview"
-              className="w-36 h-36 object-cover rounded-full border"
-            />
-          )}
-          <div className="mt-4">
-            <label className="block  font-medium text-gray-700">
-              Upload Profile Photo
-            </label>
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png"
-              onChange={handlePhotoUpload}
-              className="mt-1 block w-full text-md text-gray-900 border border-gray-300 p-2 rounded-lg cursor-pointer bg-gray-50"
-            />
-          </div>
-          {/* {uploading && <p>Uploading logo...</p>} */}
-        </div>
+         <div className='flex items-center gap-10'>
+      {photoPreview || profileData.userProfile ? (
+        <img
+          src={photoPreview || profileData.userProfile}
+          alt="Profile Preview"
+          className="w-36 h-36 object-cover rounded-full border"
+        />
+      ) : (
+        <img
+          src="/empty-profile.png"
+          alt="No Profile"
+          className="w-36 h-36 object-cover rounded-full border"
+        />
+      )}
+
+      <div className="mt-4">
+        <label className="block font-medium text-gray-700">
+          {photoPreview || profileData.userProfile ? 'Update Profile Photo' : 'Upload Profile Photo'}
+        </label>
+        <input
+          type="file"
+          accept=".jpg,.jpeg,.png"
+          onChange={handlePhotoUpload}
+          className="mt-1 block w-full text-md text-gray-900 border border-gray-300 p-2 rounded-lg cursor-pointer bg-gray-50"
+        />
+        {(photoPreview || profileData.userProfile) && (
+  <button
+    type="button"
+    onClick={handleRemovePhoto}
+    className="mt-2 flex items-center text-red-500 cursor-pointer text-md font-semibold"
+  >
+    <FaTrash className="mr-2" /> {/* Delete icon with margin */}
+    Remove Profile Photo
+  </button>
+)}
+      </div>
+    </div>
       {/* <div className='bg-blue-400 p-2 text-white rounded-lg'><h1 className='font-semibold text-lg '>Comapany Info</h1></div> */}
         {/* <div className="grid grid-cols-2 gap-4">
           <div className='space-y-2'>
@@ -372,6 +403,40 @@ const ManageUserProfile = () => {
             />
           </div>
         </div> */}
+
+{showConfirmPopup && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg relative w-80">
+            {/* Close Icon */}
+            <button
+              onClick={cancelRemovePhoto}
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
+            >
+              <FaTimes size={20} />
+            </button>
+
+            {/* Popup Content */}
+            <h2 className="text-lg font-semibold text-gray-700 mb-4">Are you sure?</h2>
+            <p className="text-gray-600 mb-6">Do you really want to remove your profile photo?</p>
+
+            {/* Yes and No Buttons */}
+            <div className="flex justify-end space-x-4">
+              <button
+                onClick={cancelRemovePhoto}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+              >
+                No
+              </button>
+              <button
+                onClick={confirmRemovePhoto}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
         {/* User Info */}
     <div className='bg-blue-400 p-2 text-white rounded-lg '><h1 className='font-semibold text-lg '>Account Info</h1></div>

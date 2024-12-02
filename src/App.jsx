@@ -6,7 +6,7 @@ import FlightSearchForm from './components/FlightSearchForm'
 import FlightResults from './components/FlightResults'
 import NavBar from './components/NavBar'
 import SearchFlights from './components/SearchFlights'
-import { AppProvider } from './context/AppContext'
+import { AppContext, AppProvider } from './context/AppContext'
 import Booking from './pages/Booking'
 import Footer from './components/Footer'
 import SeatAllocation from './components/SeatAllocation'
@@ -30,6 +30,10 @@ import UserRegister from './components/UserRegister'
 import PaymentForm from './components/PaymentForm'
 import FooterInfo from './components/FooterInfo'
 import AuthContainer from './components/AuthContainer'
+import UserInfo from './components/UserInfo'
+import { AuthContext } from './context/AuthContext'
+import FlightScheduleDetails from './components/FlightOwner/Flights/FlightScheduleDetails'
+import FlightOwnerDashboard from './components/FlightOwner/FlightOwnerDashboard'
 
 
 
@@ -53,7 +57,10 @@ const ConditionalLayout = ({ children }) => {
 
 const App = () => {
   const { isSessionExpired,setIsSessionExpired, setUserType,userType } = useSession();
+  const {setIsLoggedIn}=useContext(AuthContext)
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [authType, setAuthType] = useState('login'); // Default to login
 
   useEffect(() => {
     // Configure the interceptor when the app mounts
@@ -72,8 +79,12 @@ const App = () => {
   const handleLoginRedirect = () => {
     // Close the modal before navigating
     setIsModalOpen(false);
+    setIsLoggedIn(false);
+    localStorage.setItem('isLoggedIn','false');
+    setIsSessionExpired(null)
     if (userType === 'user') {
-      navigate('/auth?type=login'); // Redirect to normal user login
+      setAuthType('login');  // Set default to login
+      setIsOpen(true); 
     } else if (userType === 'flightOwner') {
       navigate('/flight-owner/login'); // Redirect to flight owner login
     }
@@ -86,15 +97,7 @@ const App = () => {
           <h2 className="text-lg font-bold text-red-600">Session Expired</h2>
           <p className="mt-2">Please log in again to continue.</p>
           <button
-            onClick={() => {
-              if (userType === 'user') {
-                navigate('/login'); // Redirect to normal user login
-              } else if (userType === 'flightOwner') {
-                console.log("clicked")
-                setIsSessionExpired(null)
-                navigate('/flight-owner/login'); // Redirect to flight owner login
-              }
-            }}
+            onClick={() => handleLoginRedirect()}
             className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
           >
             Login Again
@@ -102,6 +105,17 @@ const App = () => {
         </div>
       </div>
     );
+  }
+
+  if(isOpen)
+  {
+    return (<AuthContainer
+    isOpen={isOpen} 
+    onClose={() => setIsOpen(false)} 
+    authType={authType} 
+    onSwitchAuth={(type) => setAuthType(type)} 
+    onLoginSuccess={()=>{}}
+/>)
   }
  
 
@@ -116,6 +130,7 @@ const App = () => {
           <Route path="/flights/results" element={<FlightResults />}/>
           <Route path='/flights/booking/:id' element={<Booking/>}/>
           <Route path='/payment' element={<PaymentForm/>}/>
+          <Route path="/user-details" element={<UserInfo/>}/>
 
 
 
@@ -138,7 +153,7 @@ const App = () => {
               }
             >
             <Route path='manage-profile' element={<EditProfile/>}/>
-            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="dashboard" element={<FlightOwnerDashboard />} />
             <Route path="add-airline" element={<AddAirlineForm/>}/>
             <Route path='add-flight' element={<AddFlightForm/>}/>
             <Route path='view-airlines' element={<Airlines/>}/>
@@ -148,6 +163,8 @@ const App = () => {
             <Route path='flight/schedule/:id' element={<FlightProvider>
                                     <ScheduleFlights />
                                 </FlightProvider>}/>
+
+             <Route path="flightschedule/:flightScheduleId" element={<FlightScheduleDetails />} />
             <Route path='flight/layout/edit/:id' element={<AddFlightForm/>}/>
           </Route>
 

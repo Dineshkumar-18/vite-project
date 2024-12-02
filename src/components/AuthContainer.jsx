@@ -3,7 +3,7 @@ import UserLogin from './UserLogin';
 import UserRegister from './UserRegister';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
 
-const AuthContainer = ({ isOpen, onClose, authType, onSwitchAuth }) => {
+const AuthContainer = ({ isOpen, onClose, authType, onSwitchAuth,onLoginSuccess }) => {
     if (!isOpen) return null;
     const [showSuccess,setShowSuccess]=useState(false)
 
@@ -25,6 +25,7 @@ const AuthContainer = ({ isOpen, onClose, authType, onSwitchAuth }) => {
                     onClose={onClose} 
                     onSwitchToRegister={() => onSwitchAuth('register')}
                     setShowSuccess={setShowSuccess}
+                    onLoginSuccess={onLoginSuccess}
                 />
             ) : (
                 <UserRegister 

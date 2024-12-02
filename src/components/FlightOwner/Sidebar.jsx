@@ -24,7 +24,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
     <nav className={`fixed top-0 left-0 h-full bg-gray-900 text-white ${isSidebarOpen ? 'w-64' : 'w-20'} transition-all duration-300`}>
       <div className={`text-white flex items-center bg-gray-800 p-4 ${!isSidebarOpen ? 'justify-center': 'justify-between'}`}>
         {isSidebarOpen && (
-          <img src="/aeroflex.jpg" alt="Logo" className="h-12 w-12 bg-transparent" />
+          <img src="/aeroflex.jpeg" alt="Logo" className="h-12 w-16 bg-transparent" />
         )}
         <button onClick={toggleSidebar}>
           {isSidebarOpen ? <i className="fas fa-times"></i> : <i className="fas fa-bars"></i>}

@@ -3,7 +3,7 @@ import { AppContext } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import FlightDetailView from './FlightDetailView';
 
-const FlightSchedule = ({flightDetails}) => {
+const FlightSchedule = ({flightDetails,userInputData}) => {
 
   const {Class}=useContext(AppContext)
   const [toggle, setToggle] = useState(false);
@@ -12,7 +12,7 @@ const FlightSchedule = ({flightDetails}) => {
 
   const handleBooking=()=>
   {
-    navigate(`/flights/booking/${flightDetails.flightScheduleId}`, { state: { bookingDetails: flightDetails } });
+    navigate(`/flights/booking/${flightDetails.flightScheduleId}`, { state: { bookingDetails: flightDetails,userInputData:userInputData } });
   }
 
 
