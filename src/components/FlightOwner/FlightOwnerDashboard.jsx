@@ -1,10 +1,14 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, PointElement, LineElement } from 'chart.js';
 import { Bar, Line } from 'react-chartjs-2';
 import FlightRevenueGraph from "./FlightRevenueGraph.jsx";
 import { AiOutlineBarChart } from "react-icons/ai";
 import { useFlightOwner } from "./FlightOwnerContext.jsx";
 import { HiOutlineChartBar } from "react-icons/hi";
+import axios from "axios";
+import TimeRangeFilter from "./Flights/TimeRangeFilter.jsx";
+import axiosInstance from "../../utils/axiosInstance.js";
+import { info } from "autoprefixer";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement);
 
@@ -12,48 +16,71 @@ export default function FlightOwnerDashboard() {
 
     const { flightOwner } = useFlightOwner()
 
-    const [timeRange, setTimeRange] = useState('today'); // 'today', 'thisWeek', 'thisYear'
+
+
+    const [dashboardInfo,setDashboarInfo]= useState(null)
+
+
+
+    const handleFilterChange = async (filterPayload) => {
+
+        console.log("Sending payload:", filterPayload);
+        console.log("flightowner", flightOwner)
+
+         if (!flightOwner.userId) return;
+
+         console.log( `https://localhost:7055/api/FlightOwners/dashboard-info/${flightOwner.userId}`)
+
+        try {
+          const response = await axiosInstance.post(
+            `https://localhost:7055/api/FlightOwners/dashboard-info/${flightOwner.userId}`,
+             filterPayload
+          );
+          
+          console.log(response.data);
+          // setDashboardData(response.data); // if you want to store it in state
+          setDashboarInfo(response.data)
+        } catch (error) {
+          console.error("Error fetching dashboard info:", error);
+        }
+  };
+
+   // Load TOTAL data when component mounts
+  useEffect(() => {
+    const defaultPayload = {
+      timeRange: "TOTAL",
+      startDate: new Date().toISOString(),
+      endDate: new Date().toISOString(),
+      specificMonth: 0,
+      specificYear: 0,
+      offset: 0,
+    };
+    handleFilterChange(defaultPayload);
+  }, [flightOwner?.userId]);
+
+
+    
    
     const LifeTimeOverview=[
-        { title: 'Total Flights',total:50, color: 'bg-blue-500', icon: '✈️' },
-        { title: 'Domestic Flights',total:10,color: 'bg-green-500', icon: '🏠' },
-        { title: 'International Flights',total:10,color: 'bg-orange-500', icon: '🌍' },
-        { title: 'Total Revenue', today: '$1,020,400', total: '$500,000,000', color: 'bg-purple-500', icon: '💰' },
+        { title: 'Total Flights',total: dashboardInfo?.totalFlights, color: 'bg-blue-500', icon: '✈️' },
+        { title: 'Domestic Flights',total: dashboardInfo?.domesticFlights,color: 'bg-green-500', icon: '🏠' },
+        { title: 'International Flights',total:dashboardInfo?.internationalFlights,color: 'bg-orange-500', icon: '🌍' },
     ]
 
 
     const dashboardData = [
-        { title: 'Bookings', today: 50, thisWeek: 342, thisMonth: 1400, thisYear: 4400, total: 20000, color: 'bg-pink-500', icon: '📈' },
-        { title: 'Cancelled Flights', today: 1, thisWeek: 5, thisMonth: 18, thisYear: 60, total: 300, color: 'bg-red-300', icon: '❌' },
-        { title: 'Completed Flights', today: 15, thisWeek: 80, thisMonth: 300, thisYear: 960, total: 4000, color: 'bg-yellow-500', icon: '✔️' },
-        { title: 'Upcoming Flights', today: 4, thisWeek: 20, thisMonth: 80, thisYear: 250, total: 1200, color: 'bg-orange-500', icon: '⏳' },
-        { title: 'Total Passengers', today: 1200, thisWeek: 8000, thisMonth: 32000, thisYear: 96000, total: 400000, color: 'bg-teal-500', icon: '👥' },
-        { title: 'Flight Revenue', today: '$25,000', thisWeek: '$150,000', thisMonth: '$600,000', thisYear: '$1,800,000', total: '$8,000,000', color: 'bg-blue-700', icon: '💵' },
-        { title: 'Top Flights by Revenue', today: 'Flight 101, 202, 303', thisWeek: 'Flight 601, 702', thisMonth: 'Flight 1201, 1302', thisYear: 'Flight 2001, 2202', total: 'Flight 10001, 12001', color: 'bg-purple-700', icon: '🔥' },
-        { title: 'Flight Trends', today: 'Most Flights Today', thisWeek: 'Most Flights on Monday', thisMonth: 'Most Flights in Week 2', thisYear: 'Most Flights in Summer', total: 'Most Flights in 2022', color: 'bg-green-700', icon: '📊' }
+        { title: 'Bookings', total: dashboardInfo?.bookings, color: 'bg-pink-500', icon: '📈' },
+        { title: 'Cancelled Flights', total: dashboardInfo?.cancelledFlights, color: 'bg-red-300', icon: '❌' },
+        { title: 'Completed Flights',total: dashboardInfo?.tripCompletedFlights, color: 'bg-yellow-500', icon: '✔️' },
+        { title: 'Upcoming Flights', total: 1200, color: 'bg-orange-500', icon: '⏳' },
+        { title: 'Total Passengers',total: dashboardInfo?.travelledPassengers, color: 'bg-teal-500', icon: '👥' },
+        { title: 'Flight Revenue',total: dashboardInfo?.netRevenue, color: 'bg-blue-700', icon: '💵' },
+        { title: 'Top Flights by Revenue',total: `${Object.entries(dashboardInfo?.highestRevenueFlight || {}).map(([flight, revenue]) => (
+              <div key={flight}>
+                {flight}: ${revenue}
+              </div>
+))}`, color: 'bg-purple-700', icon: '🔥' },
       ];
-
-      const handleTimeRangeChange = (range) => {
-        setTimeRange(range);
-      };
-
-      // Function to determine the appropriate title suffix based on time range
-  const getTimeRangeTitle = () => {
-    switch (timeRange) {
-      case 'today':
-        return 'Today';
-      case 'thisWeek':
-        return 'This Week';
-      case 'thisMonth':
-        return 'This Month';
-      case 'thisYear':
-        return 'This Year';
-      case 'total':
-        return 'Total';
-      default:
-        return '';
-    }
-  };
 
 
   return (
@@ -88,12 +115,12 @@ export default function FlightOwnerDashboard() {
       </section>
 
 
+      <TimeRangeFilter onFilterChange={handleFilterChange} />
 
-
-      {/* Dropdown for time range selection */}
+      {/* Dropdown for time range selection
       <div className="mb-4 flex items-center justify-between">
       
-        <label className="text-2xl font-semibold text-customColor flex items-center gap-2"><AiOutlineBarChart size={40} color="blue" />{getTimeRangeTitle()} Flight Insights</label>
+        <label className="text-2xl font-semibold text-customColor flex items-center gap-2"><AiOutlineBarChart size={40} color="blue" />Flight Insights</label>
         <select
           onChange={(e) => handleTimeRangeChange(e.target.value)}
           className="p-2 border-2 border-blue-500 outline-none font-semibold focus:ring-2 rounded-lg focus:ring-blue-500"
@@ -104,37 +131,39 @@ export default function FlightOwnerDashboard() {
           <option value="thisYear">This Year</option>
           <option value="total">Total</option>
         </select>
-      </div>
+      </div> */}
+
+
 
 
        {/* Metrics Section */}
        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {dashboardData.map((item, index) => {
           // For Total Flights and Total Revenue, we always display their values
-          if (item.title === 'Total Flights' || item.title === 'Total Revenue') {
-            return (
-              <div
-                key={index}
-                className={`${item.color} text-white p-4 rounded-lg shadow-lg flex items-center`}
-              >
-                <div className="text-4xl mr-4">{item.icon}</div>
-                <div>
-                  <h2 className="text-xl font-semibold">{item.title}</h2>
-                  <p className="text-lg">
-                {timeRange === 'today'
-                  ? item.today
-                  : timeRange === 'thisWeek'
-                  ? item.thisWeek
-                  : timeRange === 'thisMonth'
-                  ? item.thisMonth
-                  : timeRange === 'thisYear'
-                  ? item.thisYear
-                  : item.total}
-              </p>
-                </div>
-              </div>
-            );
-          }
+          // if (item.title === 'Total Flights' || item.title === 'Total Revenue') {
+          //   return (
+          //     <div
+          //       key={index}
+          //       className={`${item.color} text-white p-4 rounded-lg shadow-lg flex items-center`}
+          //     >
+          //       <div className="text-4xl mr-4">{item.icon}</div>
+          //       <div>
+          //         <h2 className="text-xl font-semibold">{item.title}</h2>
+          //         <p className="text-lg">
+          //       {timeRange === 'today'
+          //         ? item.today
+          //         : timeRange === 'thisWeek'
+          //         ? item.thisWeek
+          //         : timeRange === 'thisMonth'
+          //         ? item.thisMonth
+          //         : timeRange === 'thisYear'
+          //         ? item.thisYear
+          //         : item.total}
+          //     </p>
+          //       </div>
+          //     </div>
+          //   );
+          // }
 
           // For other parameters, dynamically update title and value based on the selected time range
           return (
@@ -146,15 +175,7 @@ export default function FlightOwnerDashboard() {
               <div>
                 <h2 className="text-xl font-semibold">{`${item.title}`}</h2>
                 <p className="text-lg">
-                {timeRange === 'today'
-                  ? item.today
-                  : timeRange === 'thisWeek'
-                  ? item.thisWeek
-                  : timeRange === 'thisMonth'
-                  ? item.thisMonth
-                  : timeRange === 'thisYear'
-                  ? item.thisYear
-                  : item.total}
+                {item.total}
               </p>
               </div>
             </div>

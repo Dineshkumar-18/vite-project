@@ -62,7 +62,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
           </Link>
         </li> */}
         <li>
-          <Link href="#" className="flex items-center p-3 hover:bg-blue-500 rounded-lg">
+          <Link to="/flight-owner/manage-profile" className="flex items-center p-3 hover:bg-blue-500 rounded-lg">
             <i className='bx bxs-user mr-3'></i>
             {isSidebarOpen && <span className="ml-3">Profile</span>}
           </Link>
