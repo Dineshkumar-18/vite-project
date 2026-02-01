@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import LogoutConfirmation from './LogoutConfirmation';
 import axiosInstance from '../../utils/axiosInstance';
+import { AuthContext } from '../../context/AuthContext';
 
 const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
 
@@ -9,7 +10,10 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
 
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
 
+
   const handleLogout = () => {
+    
+
 
     axiosInstance.post('/Account/logout', {})
       .then(response => {

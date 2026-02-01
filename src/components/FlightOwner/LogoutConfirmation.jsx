@@ -1,16 +1,24 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
+import { AuthContext } from '../../context/AuthContext';
+import { useSession } from '../../context/SessionContext';
 
 const LogoutConfirmation = ({ onConfirm, onCancel }) => {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
+
+    const {logout}=useSession()
+     
     const handleLogout = () => {
         setIsLoggingOut(true);
-    
+
+        logout();
+        
         setTimeout(() => {
-          setShowSuccess(true);
+          setShowSuccess(true)
+
           setTimeout(() => {
             onConfirm()
-          }, 3000);
+          }, 1000);
         }, 500); 
       };
     

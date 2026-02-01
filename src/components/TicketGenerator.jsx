@@ -1,136 +1,116 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import { useNavigate } from 'react-router-dom';
-import ETicket from './ETicket'; // Your ticket component
+import ETicket from './ETicket';
 
-const TicketGenerator = ({ paymentId }) => {
-  const [ticketData, setTicketData] = useState([]);
-  const [currentMessage, setCurrentMessage] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-
+const TicketGenerator = ({ ticket, status, onComplete }) => {
   const navigate = useNavigate();
 
-  // Fetch ticket data
-  useEffect(() => {
-    setCurrentMessage('Fetching ticket details...');
-    fetch(`https://localhost:7055/api/Payment/paymentsuccess/${paymentId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    })
-      .then(response => response.json())
-      .then(data => {
-        setTicketData(data.data); // Populate ticket data
-        setCurrentMessage('Ticket details fetched successfully...');
-      })
-      .catch(error => console.error('Error fetching ticket data:', error));
-  }, [paymentId]);
+  let url;
+  switch (status) {
+    case 'CANCELLED':
+      url = 'https://localhost:7055/api/Ticket/send-cancel-ticket-email';
+      break;
+    case 'CONFIRMED':
+      url = 'https://localhost:7055/api/Ticket/send-ticket-email';
+      break;
+    default:
+      url = '';
+  }
 
-  // Process tickets and send to backend
   useEffect(() => {
-    if (ticketData.length > 0 && !isProcessing) {
-      setIsProcessing(true);
-      setCurrentMessage('Generating tickets...');
-      generateAndSendTickets();
+    if (ticket?.length > 0) {
+      // Small delay ensures hidden DOM is rendered
+      const timer = setTimeout(() => {
+        generateAndSendTickets();
+      }, 300);
+      return () => clearTimeout(timer);
     }
-  }, [ticketData, isProcessing]);
+  }, [ticket]);
 
-  const generateAndSendTickets = () => {
+  const generateAndSendTickets = async () => {
     const hiddenContainer = document.querySelector('#hidden-tickets-container');
+    if (!hiddenContainer) {
+      console.error('Hidden container not found.');
+      return;
+    }
+
     const ticketElements = hiddenContainer.querySelectorAll('.ticket');
+    if (!ticketElements.length) {
+      console.error('No ticket elements found.');
+      return;
+    }
+
+
     const generatedImages = [];
 
-    Promise.all(
-      Array.from(ticketElements).map((element, index) =>
-        html2canvas(element, { scale: 2 }).then(canvas => {
-          return new Promise(resolve => {
-            canvas.toBlob(blob => {
-               
-            const ticketDto = ticketData[index]; // Match DTO to element
-            const filename = `${ticketDto.bookingId}_${ticketDto.passengerId}_${ticketDto.ticketId}_${ticketDto.passengerName}.jpeg`;
+    try {
+      // ✅ Must return a Promise for each map iteration
+      await Promise.all(
+        Array.from(ticketElements).map((element) => {
+          const ticketId = element.dataset.ticketId;
+          const ticketDto = ticket.find((t) => t.ticketId == ticketId);
+          if (!ticketDto) return Promise.resolve();
 
-              generatedImages.push({
-                blob,
-                filename: filename,
-              });
-              resolve();
-            }, 'image/jpeg', 0.95);
+          return html2canvas(element, { scale: 2 }).then((canvas) => {
+            return new Promise((resolve) => {
+              canvas.toBlob((blob) => {
+                if (!blob) return resolve();
+
+                const filename = `${ticketDto.bookingId}_${ticketDto.passengerId}_${ticketDto.ticketId}_${ticketDto.passengerName}_${status === 'CANCELLED' ? 'Cancelled' : ''}.jpeg`;
+
+                generatedImages.push({
+                  blob,
+                  filename,
+                  ticketInfo: ticketDto,
+                });
+                resolve();
+              }, 'image/jpeg', 0.95);
+            });
           });
         })
-      )
-    )
-      .then(() => {
-        setCurrentMessage('Sending tickets via email...');
-        sendImagesToBackend(generatedImages);
-      })
-      .catch(error => console.error('Error generating tickets:', error));
+      );
+
+      console.log('✅ All tickets generated:', generatedImages.length);
+      await sendImagesToBackend(generatedImages);
+    } catch (error) {
+      console.error('❌ Error generating tickets:', error);
+    }
   };
 
-  const sendImagesToBackend = images => {
-    const formData = new FormData();
-    formData.append('ticketInfo', JSON.stringify(ticketData));
-    images.forEach(image => {
-      formData.append('tickets', image.blob, image.filename);
-    });
+  const sendImagesToBackend = async (images) => {
+    if (!images.length) {
+      console.warn('No images to send.');
+      return;
+    }
 
-    fetch('https://localhost:7055/api/Ticket/send-ticket-email', {
-      method: 'POST',
-      body: formData,
-    })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Failed to send tickets');
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log('Tickets sent successfully:', data);
-        setCurrentMessage('Tickets successfully sent! Redirecting...');
-        setTimeout(() => {
-          navigate('/'); // Redirect to the main page
-        }, 2000);
-      })
-      .catch(error => console.error('Error sending tickets:', error));
+    const formData = new FormData();
+    const ticketInfos = images.map((image) => image.ticketInfo);
+
+    formData.append('ticketInfo', JSON.stringify(ticketInfos));
+    images.forEach((image) => formData.append('tickets', image.blob, image.filename));
+
+    console.log('📤 Sending ticket info:', ticketInfos);
+
+    try {
+      const response = await fetch(url, { method: 'POST', body: formData });
+      if (!response.ok) throw new Error('Failed to send tickets');
+      const data = await response.json();
+      console.log('✅ Tickets sent successfully:', data);
+      onComplete();
+      // Optionally navigate after completion
+      // navigate('/');
+    } catch (error) {
+      console.error('❌ Error sending tickets:', error);
+    }
   };
 
   return (
     <div>
-      {/* Spinner and status messages */}
-      <div style={{ textAlign: 'center'}}>
-        <div className="spinner" style={{ margin: '20px auto' }}>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            style={{ margin: 'auto', background: 'none', display: 'block' }}
-            width="100px"
-            height="100px"
-            viewBox="0 0 100 100"
-            preserveAspectRatio="xMidYMid"
-          >
-            <circle
-              cx="50"
-              cy="50"
-              fill="none"
-              stroke="#007bff"
-              strokeWidth="8"
-              r="40"
-              strokeDasharray="188.49555921538757 64.83185307179586"
-            >
-              <animateTransform
-                attributeName="transform"
-                type="rotate"
-                repeatCount="indefinite"
-                dur="1s"
-                values="0 50 50;360 50 50"
-                keyTimes="0;1"
-              ></animateTransform>
-            </circle>
-          </svg>
-        </div>
-        <p className='text-white font-semibold'>{currentMessage}</p>
-      </div>
-
-      {/* Hidden ticket container */}
+      {/* Hidden container for ticket rendering */}
       <div
         id="hidden-tickets-container"
+        className='min-h-screen container mx-auto px-4 flex justify-center items-center'
         style={{
           position: 'absolute',
           top: '-9999px',
@@ -139,8 +119,10 @@ const TicketGenerator = ({ paymentId }) => {
           pointerEvents: 'none',
         }}
       >
-        {ticketData.map((ticket, index) => (
-          <ETicket key={index} ticketInfo={ticket} />
+        {ticket.map((t, index) => (
+          // ✅ Ensure ETicket root element has class "ticket" and data-ticket-id
+          
+            <ETicket key={t.ticketId} ticketInfo={t} />
         ))}
       </div>
     </div>

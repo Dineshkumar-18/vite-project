@@ -3,7 +3,8 @@ import { AppContext } from '../context/AppContext';
 import { useSession } from '../context/SessionContext';
 import axiosInstance from '../utils/axiosInstance';
 import { Link } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext, useAuth } from '../context/AuthContext';
+import {Role} from '../constants/Role'
 
 const UserLogin = ({ onClose,onSwitchToRegister,setShowSuccess,onLoginSuccess }) => {
   const [userId, setUserId] = useState(null);
@@ -11,7 +12,7 @@ const UserLogin = ({ onClose,onSwitchToRegister,setShowSuccess,onLoginSuccess })
   const [error, setError] = useState('');
   const [login, setLogin] = useState({ email: '', password: '' });
   const [view, setView] = useState(false);
-  const { setUserType } = useSession();
+  const { setInitialRole } = useSession();
 
   const handleChange = (e) => {
     setLogin({ ...login, [e.target.name]: e.target.value });
@@ -25,8 +26,7 @@ const UserLogin = ({ onClose,onSwitchToRegister,setShowSuccess,onLoginSuccess })
         setError(response.data.message);
       } else {
         setError('');
-        setUserType('user');
-        setIsLoggedIn(true);
+        setInitialRole(Role.USER)
         setShowSuccess(true)
         setTimeout(() => {
           setShowSuccess(false);
@@ -83,6 +83,8 @@ const UserLogin = ({ onClose,onSwitchToRegister,setShowSuccess,onLoginSuccess })
             Login
           </button>
           <div className="register-link text-center mt-6 text-sm">
+            
+            <Link to={"/forgot-password"} className="text-blue-500 hover:underline font-semibold cursor-pointer">Forgot Password?</Link>
             <p>
               Don't have an account?{' '}
               <span onClick={onSwitchToRegister} className="text-blue-500 hover:underline font-semibold cursor-pointer">Register</span>

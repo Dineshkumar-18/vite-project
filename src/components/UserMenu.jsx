@@ -10,26 +10,26 @@ const UserMenu = ({ navigate, setShowLogoutConfirmation }) => {
         {/* Manage Profile */}
         <div
           className="flex items-center gap-3 hover:bg-blue-500 hover:text-white rounded-lg p-2"
-          onClick={() => navigate("/")}
+          onClick={() => navigate("/user-details?tab=Manage Profile")}
         >
           <i className="fas fa-user-edit"></i>
           <span className="text-md font-semibold">Manage Profile</span>
         </div>
         
         {/* Trips */}
-        <div className="flex items-center gap-3 p-2 hover:bg-blue-500 hover:text-white rounded-lg">
+        <div className="flex items-center gap-3 p-2 hover:bg-blue-500 hover:text-white rounded-lg" onClick={()=> navigate("/user-details?tab=Trips")}>
         <i class="fa-solid fa-plane-departure"></i>
           <span className="font-semibold">Trips</span>
         </div>
         
 
         {/* Travellers */}
-        <div className="flex items-center gap-3 p-2 hover:bg-blue-500 hover:text-white rounded-lg">
+        <div className="flex items-center gap-3 p-2 hover:bg-blue-500 hover:text-white rounded-lg" onClick={()=> navigate("/user-details?tab=Travellers")}>
         <i class="fa-solid fa-user-group"></i>
           <span className="font-semibold">Travellers</span>
         </div>
 
-        <div className="flex items-center gap-3 p-2 hover:bg-blue-500 hover:text-white rounded-lg">
+        <div className="flex items-center gap-3 p-2 hover:bg-blue-500 hover:text-white rounded-lg" onClick={()=> navigate("/user-details?tab=Settings")}>
         <i class="fa-solid fa-gear"></i>
           <span className="font-semibold">Settings</span>
         </div>

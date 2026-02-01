@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { AppContext } from '../context/AppContext'
 import LoginButton from './LoginButton'
 import AuthContainer from './AuthContainer'
@@ -7,14 +7,15 @@ import LogoutConfirmation from './FlightOwner/LogoutConfirmation'
 import axiosInstance from '../utils/axiosInstance'
 import UserMenu from './UserMenu'
 import { AuthContext } from '../context/AuthContext'
+import { useSession } from '../context/SessionContext'
 
 const NavBar = () => {
 
   const navigate=useNavigate()
-  const {isLoggedIn,setIsLoggedIn}=useContext(AuthContext)
    const[profileOpen,setProfileOpen]=useState(false)
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
   const dropdownRef = useRef(null);
+  const {activeRole}=useSession();
 
 
     const [isOpen, setIsOpen] = useState(false);
@@ -41,9 +42,6 @@ const NavBar = () => {
 
     axiosInstance.post('/Account/logout', {})
       .then(response => {
-        setIsLoggedIn(false);
-        localStorage.setItem('isLoggedIn', 'false');
-        localStorage.setItem('userType','user');
         setShowLogoutConfirmation(false)
         navigate('/');
       })
@@ -81,10 +79,10 @@ const NavBar = () => {
         </div>
           <div>
 
-           {!isLoggedIn ?
+           {!activeRole ?
             (<button 
                 className='px-6 py-3 border rounded-lg font-semibold border-white text-white hover:bg-blue-600 hover:border-customColor shadow-lg backdrop-blur-md' 
-                onClick={() => handleOpenAuth(isLoggedIn ? 'login' : 'register')}
+                onClick={() => handleOpenAuth(!activeRole ? 'login' : 'register')}
             >
                 Login/Signup
             </button>) : (

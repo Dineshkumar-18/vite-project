@@ -7,13 +7,14 @@ import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext.jsx'
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <SessionProvider>
-      <AuthProvider>
-    <BrowserRouter>
-        <App/>
-    </BrowserRouter>
+<StrictMode>
+  <BrowserRouter>
+    <AuthProvider>
+      <SessionProvider>
+        <App />
+      </SessionProvider>
     </AuthProvider>
-    </SessionProvider>
-  </StrictMode>,
+  </BrowserRouter>
+</StrictMode>
+
 )

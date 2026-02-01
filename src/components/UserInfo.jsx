@@ -1,10 +1,29 @@
 import { BriefcaseIcon, CogIcon, PrinterIcon, TicketIcon, UserCircleIcon, UsersIcon } from '@heroicons/react/24/solid';
-import React, { useState } from 'react';
+import React, { useEffect, useState} from 'react';
+import { useSearchParams } from "react-router-dom";
 import ManageUserProfile from './ManageUserProfile';
+import UserTrips from './UserTrips';
 
 const UserInfo = () => {
-  // State to track the currently selected menu
-  const [selectedMenu, setSelectedMenu] = useState('Manage Profile');
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const tabFromUrl = searchParams.get("tab") || "Manage Profile";
+
+  const [selectedMenu, setSelectedMenu] = useState(tabFromUrl);
+
+
+  const handleMenuClick = (menuName) => {
+    setSelectedMenu(menuName);
+    setSearchParams({ tab: menuName }); // Update ?tab= in the URL
+  };
+
+    // Sync when user uses back/forward browser navigation
+  useEffect(() => {
+    if (tabFromUrl !== selectedMenu) {
+      setSelectedMenu(tabFromUrl);
+    }
+  }, [tabFromUrl]);
 
   // Function to render the content based on the selected menu
   const renderContent = () => {
@@ -12,7 +31,7 @@ const UserInfo = () => {
       case 'Manage Profile':
         return <ManageUserProfile/>
       case 'Trips':
-        return <p>View your upcoming trips.</p>;
+        return <UserTrips/>;
       case 'Travellers':
         return <p>Manage travellers associated with your account.</p>;
       case 'Settings':
@@ -47,7 +66,7 @@ const UserInfo = () => {
                 className={`flex items-center w-full text-left p-2 rounded hover:bg-blue-500 hover:text-white transition ${
                   selectedMenu === menu.name ? 'bg-blue-500 text-white' : 'text-gray-700'
                 }`}
-                onClick={() => setSelectedMenu(menu.name)}
+                onClick={() => handleMenuClick(menu.name)}
               >
                 <span className="mr-3">{menu.icon}</span>
                 {menu.name}
@@ -60,7 +79,7 @@ const UserInfo = () => {
       {/* Right content view */}
       <div className="w-3/4 p-6">
         <h1 className="text-2xl font-bold mb-4">{selectedMenu}</h1>
-        <div>{renderContent()}</div>
+        {renderContent()}
       </div>
     </div>
   );

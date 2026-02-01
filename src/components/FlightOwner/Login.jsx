@@ -1,22 +1,21 @@
 import axios from 'axios';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, replace, useNavigate } from 'react-router-dom';
 import { useFlightOwner } from './FlightOwnerContext';
 import axiosInstance from '../../utils/axiosInstance';
 import { useSession } from '../../context/SessionContext';
-import { AuthContext } from '../../context/AuthContext';
+import { AuthContext, useAuth } from '../../context/AuthContext';
+import {Role} from '../../constants/Role.js'
 
 const Login = () => {
   const [flightOwnerId, setFlightOwnerId] = useState(null);
-  const {isLoggedIn, setIsLoggedIn} = useContext(AuthContext);
   const [isProfileCompleted, setIsProfileCompleted] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
   const [error, setError] = useState('');
   const [login, setLogin] = useState({ email: '', password: '' });
   const [view, setView] = useState(false);
-  const { updateFlightOwner } = useFlightOwner();
   const navigate = useNavigate();
-  const{setUserType}=useSession()
+  const{setInitialRole,activeRole,initialRole}=useSession()
 
   const handleChange = (e) => {
     setLogin({ ...login, [e.target.name]: e.target.value });
@@ -30,8 +29,8 @@ const Login = () => {
         setError(response.data.message);
       } else {
         setError('');
-        setUserType('flightOwner');
-        setIsLoggedIn(true); // Trigger the useEffect for fetching details
+        setInitialRole(Role.FLIGHT_OWNER);
+        console.log("Initial Role: ",initialRole)
       }
     } catch (error) {
       setError(error.message);
@@ -44,7 +43,7 @@ const Login = () => {
 
   const fetchFlightOwnerDetails = async () => {
     try {
-            const response = await axiosInstance.get('/FlightOwners/get-flightowner-details');
+      const response = await axiosInstance.get('/FlightOwners/get-flightowner-details');
 
       const { flightOwnerId } = response.data;
       setFlightOwnerId(flightOwnerId);
@@ -52,7 +51,7 @@ const Login = () => {
 
       const profileResponse = await axiosInstance.get(`/FlightOwners/${flightOwnerId}`);
       console.log(profileResponse.data)
-      localStorage.setItem('userData', JSON.stringify(profileResponse.userName));
+      localStorage.setItem('userData', JSON.stringify(profileResponse.data.userName));
       const { isProfileCompleted, isApproved } = profileResponse.data;
 
       setIsProfileCompleted(isProfileCompleted);
@@ -60,7 +59,7 @@ const Login = () => {
 
       // Redirect based on profile status
       if (isProfileCompleted && isApproved) {
-        navigate('/flight-owner/dashboard');
+        navigate('/flight-owner/dashboard',{ replace: true });
       } else {
         navigate('/flight-owner/');
       }
@@ -70,10 +69,10 @@ const Login = () => {
   };
 
   useEffect(() => {
-    if (isLoggedIn) {
+    if (activeRole) {
       fetchFlightOwnerDetails();
     }
-  }, [isLoggedIn]);
+  }, [activeRole]);
 
   return (
     <div className='min-h-screen flex justify-center items-center bg-slate-300'>
@@ -111,7 +110,7 @@ const Login = () => {
               <input type="checkbox" className="accent-white mr-2" />
               Remember Me
             </label>
-            <a href="#" className="text-white hover:underline">Forgot Password</a>
+            <Link to="/forgot-password" state={{ initiatedFrom: "FLIGHT_OWNER" }} className="text-white hover:underline">Forgot Password</Link>
           </div>
           <button
             type="submit"

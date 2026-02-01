@@ -1,7 +1,10 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useEffect, useState } from "react";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+
+import { useSession } from "./context/SessionContext";
+import { useAuth } from "./context/AuthContext";
 import Home from './pages/Home'
 import Login from './components/FlightOwner/Login'
-import { BrowserRouter, Route, Routes, useLocation,useNavigate } from 'react-router-dom'
 import FlightSearchForm from './components/FlightSearchForm'
 import FlightResults from './components/FlightResults'
 import NavBar from './components/NavBar'
@@ -19,8 +22,6 @@ import FlightOwnerProfile from './components/FlightOwner/FlightOwnerProfile'
 import { FlightOwnerProvider } from './components/FlightOwner/FlightOwnerContext'
 import EditProfile from './components/FlightOwner/EditProfile'
 import Airlines from './components/FlightOwner/Airline/Airlines'
-import {useSession } from './context/SessionContext'
-import { configureInterceptors } from './utils/axiosInstance'
 import AirlineDetails from './components/FlightOwner/Airline/AirlineDetails'
 import FlightDetails from './components/FlightOwner/Flights/FlightDetails'
 import ScheduleFlights from './components/FlightOwner/Flights/ScheduleFlights'
@@ -34,10 +35,76 @@ import UserInfo from './components/UserInfo'
 import { AuthContext } from './context/AuthContext'
 import FlightScheduleDetails from './components/FlightOwner/Flights/FlightScheduleDetails'
 import FlightOwnerDashboard from './components/FlightOwner/FlightOwnerDashboard'
+import ETicketTestPage from './Testing/ETicketTestPage'
+import BookingConfirmationEmail from './Testing/BookingConfirmationEmail'
+import ForgotPassword from './components/ForgotPassword'
+import ResetPassword from './components/ResetPassword'
+import { configureInterceptors } from "./utils/axiosInstance";
+import ProtectedRoute from "./components/ProtectedRoute";
+import {Role} from './constants/Role.js'
+import Forbidden from "./components/Forbidden.jsx";
 
+const App = () => {
+  const {
+    isSessionExpired,
+    setIsSessionExpired,
+    setInitialRole,
+    loading,
+    logout
+  } = useSession();
 
+  const [showAuth, setShowAuth] = useState(false);
+  const navigate = useNavigate();
+  const location= useLocation();
 
-const ConditionalLayout = ({ children }) => {
+  /* Axios interceptor */
+  useEffect(() => {
+    configureInterceptors(setIsSessionExpired);
+  }, [setIsSessionExpired]);
+
+  /* Session expired handling */
+  useEffect(() => {
+    if (isSessionExpired) {
+      setShowAuth(true);
+    }
+  }, [isSessionExpired]);
+
+  const handleReLogin = () => {
+    logout();
+    setShowAuth(false);
+    // Default to user login
+    setInitialRole(Role.USER);
+    if(location.pathname.startsWith("/flight-owner"))
+    {
+      navigate("/flight-owner/login");
+    }
+    else{
+      navigate("/")
+    }
+
+  };
+
+  if (loading) return null;
+
+  /* Session expired modal */
+  if (showAuth) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="bg-white p-6 rounded">
+          <h2 className="text-red-600 font-bold">Session Expired</h2>
+          <p>Please login again.</p>
+          <button
+            onClick={handleReLogin}
+            className="mt-4 bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            Login Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const ConditionalLayout = ({ children }) => {
   const location = useLocation();
   
   const isFlightOwnerRoute = location.pathname.startsWith('/flight-owner');
@@ -55,129 +122,116 @@ const ConditionalLayout = ({ children }) => {
   );
 };
 
-const App = () => {
-  const { isSessionExpired,setIsSessionExpired, setUserType,userType } = useSession();
-  const {setIsLoggedIn}=useContext(AuthContext)
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
-  const [authType, setAuthType] = useState('login'); // Default to login
-
-  useEffect(() => {
-    // Configure the interceptor when the app mounts
-    configureInterceptors(setIsSessionExpired);
-  }, [setIsSessionExpired,setUserType]);
-
-  useEffect(() => {
-    // If session expired, open the modal
-    if (isSessionExpired) {
-      setIsModalOpen(true);
-    }
-  }, [isSessionExpired]);
-
-  const navigate=useNavigate()
-
-  const handleLoginRedirect = () => {
-    // Close the modal before navigating
-    setIsModalOpen(false);
-    setIsLoggedIn(false);
-    localStorage.setItem('isLoggedIn','false');
-    setIsSessionExpired(null)
-    if (userType === 'user') {
-      setAuthType('login');  // Set default to login
-      setIsOpen(true); 
-    } else if (userType === 'flightOwner') {
-      navigate('/flight-owner/login'); // Redirect to flight owner login
-    }
-  };
-
-  if (isSessionExpired) {
+  /* Login modal */
+  if (showAuth) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-        <div className="bg-white p-6 rounded-lg shadow-lg">
-          <h2 className="text-lg font-bold text-red-600">Session Expired</h2>
-          <p className="mt-2">Please log in again to continue.</p>
-          <button
-            onClick={() => handleLoginRedirect()}
-            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
-          >
-            Login Again
-          </button>
-        </div>
-      </div>
+      <AuthContainer
+        isOpen
+        onClose={() => setShowAuth(false)}
+        authType="login"
+        onLoginSuccess={() => setShowAuth(false)}
+      />
     );
   }
 
-  if(isOpen)
-  {
-    return (<AuthContainer
-    isOpen={isOpen} 
-    onClose={() => setIsOpen(false)} 
-    authType={authType} 
-    onSwitchAuth={(type) => setAuthType(type)} 
-    onLoginSuccess={()=>{}}
-/>)
-  }
- 
-
   return (
-    
-      <AppProvider>
-       <ConditionalLayout>
+    <AppProvider>
+      <ConditionalLayout>
         <Routes>
-  
+          {/* -------- PUBLIC ROUTES -------- */}
           <Route path="/" element={<SearchFlights />} />
-          <Route path="/auth" element={<AuthContainer/>}/>
-          <Route path="/flights/results" element={<FlightResults />}/>
-          <Route path='/flights/booking/:id' element={<Booking/>}/>
-          <Route path='/payment' element={<PaymentForm/>}/>
-          <Route path="/user-details" element={<UserInfo/>}/>
+          <Route path="/flights/results" element={<FlightResults />} />
+          <Route path="/auth" element={<AuthContainer />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/forbidden" element={<Forbidden />} />
 
 
+          {/* -------- USER PROTECTED -------- */}
+          <Route
+            path="/flights/booking/:id"
+            element={
+              <ProtectedRoute allowedRoles={[Role.USER]}>
+                <Booking />
+              </ProtectedRoute>
+            }
+          />
 
-          <Route path="/flight-owner/register" element={
-          <FlightOwnerProvider>
-            <Register />
-          </FlightOwnerProvider>
-          }/>
-        <Route path="/flight-owner/login" element={
-          <FlightOwnerProvider>
-            <Login />
-          </FlightOwnerProvider>
-        }/>
-         <Route 
-              path="/flight-owner/*" 
-              element={
+          <Route
+            path="/payment"
+            element={
+              <ProtectedRoute allowedRoles={[Role.USER]}>
+                <PaymentForm />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/user-details"
+            element={
+              <ProtectedRoute allowedRoles={[Role.USER]}>
+                <UserInfo />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/booking-confirm-email"
+            element={
+              <ProtectedRoute allowedRoles={[Role.USER]}>
+                <BookingConfirmationEmail />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/e-ticket"
+            element={
+              <ProtectedRoute allowedRoles={[Role.USER]}>
+                <ETicketTestPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* -------- FLIGHT OWNER AUTH -------- */}
+          <Route path="/flight-owner/login" element={<Login />} />
+          <Route path="/flight-owner/register" element={<Register />} />
+
+          {/* -------- FLIGHT OWNER PROTECTED -------- */}
+          <Route
+            path="/flight-owner/*"
+            element={
+              <ProtectedRoute allowedRoles={[Role.FLIGHT_OWNER]}>
                 <FlightOwnerProvider>
                   <FlightOwnerLayout />
                 </FlightOwnerProvider>
-              }
-            >
-            <Route path='manage-profile' element={<EditProfile/>}/>
+              </ProtectedRoute>
+            }
+          >
             <Route path="dashboard" element={<FlightOwnerDashboard />} />
-            <Route path="add-airline" element={<AddAirlineForm/>}/>
-            <Route path='add-flight' element={<AddFlightForm/>}/>
-            <Route path='view-airlines' element={<Airlines/>}/>
-            <Route path="view-airline/:id" element={<AirlineDetails/>}/>
-
-            <Route path='flight/:id' element={<FlightDetails/>}/>
-            <Route path='flight/schedule/:id' element={<FlightProvider>
-                                    <ScheduleFlights />
-                                </FlightProvider>}/>
-
-             <Route path="flightschedule/:flightScheduleId" element={<FlightScheduleDetails />} />
-            <Route path='flight/layout/edit/:id' element={<AddFlightForm/>}/>
+            <Route path="manage-profile" element={<EditProfile />} />
+            <Route path="add-airline" element={<AddAirlineForm />} />
+            <Route path="add-flight" element={<AddFlightForm />} />
+            <Route path="view-airlines" element={<Airlines />} />
+            <Route path="view-airline/:id" element={<AirlineDetails />} />
+            <Route path="flight/:id" element={<FlightDetails />} />
+            <Route
+              path="flight/schedule/:id"
+              element={
+                <FlightProvider>
+                  <ScheduleFlights />
+                </FlightProvider>
+              }
+            />
+            <Route
+              path="flightschedule/:flightScheduleId"
+              element={<FlightScheduleDetails />}
+            />
           </Route>
-
-      </Routes>
+        </Routes>
       </ConditionalLayout>
-      
-      </AppProvider>
-
-
-
+    </AppProvider>
   );
+};
 
-}
-
-export default App
-
+export default App;

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate, useNavigation } from 'react-router-dom';
+import { replace, useNavigate, useNavigation } from 'react-router-dom';
 import LogoutConfirmation from './LogoutConfirmation';
 import axios from 'axios';
 import { useFlightOwner } from './FlightOwnerContext';
@@ -29,7 +29,7 @@ const Topbar = () => {
 
     axiosInstance.post('/Account/logout', {})
       .then(response => {
-        navigate('/flight-owner/login');
+        navigate('/flight-owner/login',replace);
       })
       .catch(error => {
         console.error('Error during logout:', error);
